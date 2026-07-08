@@ -1,4 +1,10 @@
 # humane
+
+[![go.mod version](https://img.shields.io/github/go-mod/go-version/woodie/humane)](https://github.com/woodie/humane)
+[![CI](https://github.com/woodie/humane/actions/workflows/ci.yml/badge.svg)](https://github.com/woodie/humane/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/woodie/humane.svg)](https://github.com/woodie/humane/releases/latest)
+[![License](https://img.shields.io/github/license/woodie/humane.svg)](LICENSE)
+
 Swift's file sizes and relative dates for Go
 
 Finder-accurate file sizes and relative dates for Go, modeled on Swift's [`ByteCountFormatter`](https://developer.apple.com/documentation/foundation/bytecountformatter) and [`RelativeDateTimeFormatter`](https://developer.apple.com/documentation/foundation/relativedatetimeformatter) -- not literal ports (both are closed-source, and `TimeFormatter`'s wording is a deliberate departure), but the same idea: a small, configurable formatter object instead of a bare function.
