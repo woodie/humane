@@ -66,7 +66,7 @@ var _ = Describe("TimeFormatter", func() {
 			Context("15 hours ago", func() {
 				BeforeEach(func() { when = base.Add(-15 * time.Hour) })
 
-				It("displays 15 hours ago, with no 'about' prefix", func() {
+				It("displays 15 hours ago", func() {
 					Expect(formatter.Format(when, base)).To(Equal("15 hours ago"))
 				})
 			})
