@@ -1,6 +1,6 @@
 module github.com/woodie/humane
 
-go 1.21
+go 1.25.0
 
 require (
 	github.com/onsi/ginkgo/v2 v2.29.0
