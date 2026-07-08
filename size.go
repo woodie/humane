@@ -1,7 +1,4 @@
-// Package humane formats file sizes and relative dates the way macOS
-// Finder does, modeled on Swift's ByteCountFormatter and
-// RelativeDateTimeFormatter: small, configurable formatter types with a
-// single Format method, rather than a bare function.
+// Package humane formats file sizes and relative dates the way macOS Finder does.
 package humane
 
 import (
@@ -9,22 +6,13 @@ import (
 	"math"
 )
 
-// sizeUnits are Finder's capitalized, 1000-based unit labels -- not the
-// SI-correct lowercase "kB", and not 1024-based "KiB"/"MiB". No published
-// Go library ships this exact combination; see the README for why.
+// sizeUnits are Finder's capitalized, 1000-based unit labels.
 var sizeUnits = []string{"B", "KB", "MB", "GB", "TB", "PB", "EB"}
 
-// SizeFormatter formats byte counts the way Finder does: 1000-based
-// math, capitalized unit labels, rounded to 2 significant digits. The
-// zero value is ready to use -- there's no configuration yet, since
-// Finder's is the only style this package currently needs.
+// SizeFormatter formats byte counts the way Finder does; the zero value is ready to use.
 type SizeFormatter struct{}
 
 // Format returns bytes as a Finder-style human-readable string.
-//
-//	SizeFormatter{}.Format(79992)  == "80 KB"
-//	SizeFormatter{}.Format(225935) == "226 KB"
-//	SizeFormatter{}.Format(1500000) == "1.5 MB"
 func (f SizeFormatter) Format(bytes int64) string {
 	if bytes < 1000 {
 		return fmt.Sprintf("%d B", bytes)

@@ -5,43 +5,18 @@ import (
 	"time"
 )
 
-// TimeFormatter formats one time relative to another the way Finder-
-// adjacent tools do: symmetric "X ago" / "X from now" phrasing, with no
-// "about" prefix on the hour bucket -- Swift's RelativeDateTimeFormatter
-// has no such prefix either, and Go's justincampbell/timeago (which
-// does add one) is exactly what this package replaces.
-//
-// The zero value has CollapseMinute set to false (second-level
-// granularity for anything under a minute); use NewTimeFormatter for
-// the collapsed default described below. Go structs can't default a
-// bool field to true from a bare literal, so the constructor is the
-// recommended way to get it -- TimeFormatter{CollapseMinute: true}
-// works identically if you'd rather not use it.
+// TimeFormatter formats one time relative to another the way Finder-adjacent tools do.
 type TimeFormatter struct {
-	// CollapseMinute renders any duration under 60 seconds as "less
-	// than a minute ago" / "less than a minute from now" instead of
-	// counting seconds. Rails' distance_of_time_in_words, Go's
-	// justincampbell/timeago, and zouk's own RelativeDateTimeFormatter
-	// wrapper all do this in practice -- Swift's formatter has no such
-	// bucket natively, so there's no "pure" behavior being overridden
-	// here, just a convenience every real reference already reaches for.
+	// CollapseMinute buckets anything under a minute as "less than a minute ago/from now".
 	CollapseMinute bool
 }
 
-// NewTimeFormatter returns a TimeFormatter with CollapseMinute enabled,
-// the recommended default.
+// NewTimeFormatter returns a TimeFormatter with CollapseMinute enabled, the recommended default.
 func NewTimeFormatter() TimeFormatter {
 	return TimeFormatter{CollapseMinute: true}
 }
 
 // Format returns t relative to relativeTo as a human-readable string.
-//
-//	f := NewTimeFormatter()
-//	f.Format(t, t)                          == "less than a minute ago"
-//	f.Format(t, t.Add(3*time.Minute))        == "3 minutes ago"
-//	f.Format(t, t.Add(-3*time.Minute))       == "3 minutes from now"
-//	f.Format(t, t.Add(15*time.Hour))         == "15 hours ago"
-//	f.Format(t, t.Add(30*time.Hour))         == "1 day ago"
 func (f TimeFormatter) Format(t, relativeTo time.Time) string {
 	d := relativeTo.Sub(t)
 	future := d < 0
