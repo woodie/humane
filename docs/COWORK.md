@@ -82,29 +82,28 @@ is the actual design lineage here. The Ruby sibling is `humane-ruby` rather than
 ## Sandbox limitation
 
 No Go toolchain in the Cowork sandbox (confirmed: no `go` binary) -- same
-situation as `lambada`. `size.go`/`time.go`/their tests were written by
-inspection and hand-traced against the test cases by arithmetic, not run.
-**Not yet confirmed**: ask whoever's continuing this to run `go test ./...` on a
-machine with Go and report back before trusting this is bug-free.
+situation as `lambada`. Code changes here are made by inspection, then
+**confirmed on real hardware**: woodie ran `go mod tidy`/`go test ./...`/
+`ginkgo-fd` on their Mac each time, including after the switch to
+Ginkgo/Gomega and the `lambada` integration below. Still true for anyone
+picking this up fresh -- don't trust sandbox-only changes to `.go` files
+until they've been run for real.
 
 ## Current state
 
-`SizeFormatter` and `TimeFormatter` are implemented with tests (`size_test.go`,
-`time_test.go`), not yet confirmed passing (see Sandbox limitation).
-`humane-ruby` hasn't been started. Once both are done and confirmed, `lambada`'s
-`main.go` and `scandalous`'s `web.rb` both need to swap their hand-rolled
-formatters for these packages (dropping `justincampbell/timeago` from
-`lambada`'s `go.mod` and `ActionView::Helpers::DateHelper` from `scandalous`'s
-`web.rb` in the process).
+Done: `SizeFormatter`, `TimeFormatter`, Ginkgo/Gomega tests, README,
+`docs/COMMENTS.md` (long comments extracted per the convention in
+zouk's `docs/COWORK.md`), a GitHub Actions `ci.yml`, and README badges.
+Tagged and pushed as `v0.1.0`. Integrated into `lambada`'s `main.go`
+(replacing `humanSize` and `justincampbell/timeago`-backed `timeAgo`),
+released as `lambada` `2.2.0` -- confirmed via `go test ./...`, 44/44
+passing. `humane-ruby` is the published Ruby sibling, integrated into
+`scandalous` the same way, released as `scandalous` `2.2.0`.
 
 ## Next up
 
-- Confirm `go test ./...` passes on real Go.
-- Build `humane-ruby`: same `SizeFormatter`/`TimeFormatter` shape, same
-  algorithm, same wording, RSpec tests mirroring these Go tests.
-- Integrate into `lambada` (replace `humanSize`/`timeAgo` in `main.go`) and
-  `scandalous` (replace `human_size`/`time_ago_in_words` in `web.rb`), updating
-  each repo's test fixtures for the wording changes (e.g., `"about 15 hours
-  ago"` -> `"15 hours ago"`).
-- Publish: tag `humane` as a Go module (works automatically once pushed with a
-  semver tag), `gem push` `humane-ruby` to RubyGems.
+Nothing outstanding. If scope ever needs to grow: `SizeFormatter` has no
+`AllowedUnits`/`CountStyle` (Finder's style is the only one anything
+downstream needs today), and `TimeFormatter` has no `.named` style
+(`"yesterday"`, calendar-boundary-aware) -- both left out deliberately
+per "Design decisions" above, not gaps to fill without a real need.
