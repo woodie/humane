@@ -1,60 +1,150 @@
-package humane
+package humane_test
 
 import (
-	"testing"
 	"time"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
+	"github.com/woodie/humane"
 )
 
-func TestTimeFormatter_Format_collapseMinute(t *testing.T) {
+var _ = Describe("TimeFormatter", func() {
 	base := time.Date(2026, 7, 8, 12, 0, 0, 0, time.UTC)
-	f := NewTimeFormatter() // CollapseMinute: true
 
-	cases := []struct {
-		name string
-		when time.Time
-		want string
-	}{
-		{"just now", base, "less than a minute ago"},
-		{"45 seconds ago", base.Add(-45 * time.Second), "less than a minute ago"},
-		{"3 minutes ago", base.Add(-3 * time.Minute), "3 minutes ago"},
-		{"1 minute ago (singular)", base.Add(-1 * time.Minute), "1 minute ago"},
-		{"15 hours ago, no 'about' prefix", base.Add(-15 * time.Hour), "15 hours ago"},
-		{"1 hour ago (singular)", base.Add(-1 * time.Hour), "1 hour ago"},
-		{"30 hours ago rolls to 1 day", base.Add(-30 * time.Hour), "1 day ago"},
-		{"3 days ago", base.Add(-72 * time.Hour), "3 days ago"},
-		{"45 seconds from now", base.Add(45 * time.Second), "less than a minute from now"},
-		{"3 minutes from now", base.Add(3 * time.Minute), "3 minutes from now"},
-	}
+	Describe("Format", func() {
+		Context("with CollapseMinute (the default)", func() {
+			var (
+				formatter humane.TimeFormatter
+				when      time.Time
+			)
 
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			if got := f.Format(c.when, base); got != c.want {
-				t.Errorf("Format(%v, base) = %q, want %q", c.when, got, c.want)
-			}
+			BeforeEach(func() {
+				formatter = humane.NewTimeFormatter()
+			})
+
+			Context("just now", func() {
+				BeforeEach(func() { when = base })
+
+				It("displays less than a minute ago", func() {
+					Expect(formatter.Format(when, base)).To(Equal("less than a minute ago"))
+				})
+			})
+
+			Context("45 seconds ago", func() {
+				BeforeEach(func() { when = base.Add(-45 * time.Second) })
+
+				It("displays less than a minute ago", func() {
+					Expect(formatter.Format(when, base)).To(Equal("less than a minute ago"))
+				})
+			})
+
+			Context("1 minute ago", func() {
+				BeforeEach(func() { when = base.Add(-1 * time.Minute) })
+
+				It("displays 1 minute ago, singular", func() {
+					Expect(formatter.Format(when, base)).To(Equal("1 minute ago"))
+				})
+			})
+
+			Context("3 minutes ago", func() {
+				BeforeEach(func() { when = base.Add(-3 * time.Minute) })
+
+				It("displays 3 minutes ago", func() {
+					Expect(formatter.Format(when, base)).To(Equal("3 minutes ago"))
+				})
+			})
+
+			Context("1 hour ago", func() {
+				BeforeEach(func() { when = base.Add(-1 * time.Hour) })
+
+				It("displays 1 hour ago, singular", func() {
+					Expect(formatter.Format(when, base)).To(Equal("1 hour ago"))
+				})
+			})
+
+			Context("15 hours ago", func() {
+				BeforeEach(func() { when = base.Add(-15 * time.Hour) })
+
+				It("displays 15 hours ago, with no 'about' prefix", func() {
+					Expect(formatter.Format(when, base)).To(Equal("15 hours ago"))
+				})
+			})
+
+			Context("30 hours ago", func() {
+				BeforeEach(func() { when = base.Add(-30 * time.Hour) })
+
+				It("rolls up to 1 day ago", func() {
+					Expect(formatter.Format(when, base)).To(Equal("1 day ago"))
+				})
+			})
+
+			Context("3 days ago", func() {
+				BeforeEach(func() { when = base.Add(-3 * 24 * time.Hour) })
+
+				It("displays 3 days ago", func() {
+					Expect(formatter.Format(when, base)).To(Equal("3 days ago"))
+				})
+			})
+
+			Context("45 seconds from now", func() {
+				BeforeEach(func() { when = base.Add(45 * time.Second) })
+
+				It("displays less than a minute from now", func() {
+					Expect(formatter.Format(when, base)).To(Equal("less than a minute from now"))
+				})
+			})
+
+			Context("3 minutes from now", func() {
+				BeforeEach(func() { when = base.Add(3 * time.Minute) })
+
+				It("displays 3 minutes from now", func() {
+					Expect(formatter.Format(when, base)).To(Equal("3 minutes from now"))
+				})
+			})
 		})
-	}
-}
 
-func TestTimeFormatter_Format_precise(t *testing.T) {
-	base := time.Date(2026, 7, 8, 12, 0, 0, 0, time.UTC)
-	f := TimeFormatter{} // CollapseMinute: false -- zero value, second-level detail
+		Context("with CollapseMinute: false", func() {
+			var (
+				formatter humane.TimeFormatter
+				when      time.Time
+			)
 
-	cases := []struct {
-		name string
-		when time.Time
-		want string
-	}{
-		{"just now", base, "0 seconds ago"},
-		{"45 seconds ago", base.Add(-45 * time.Second), "45 seconds ago"},
-		{"1 second ago (singular)", base.Add(-1 * time.Second), "1 second ago"},
-		{"45 seconds from now", base.Add(45 * time.Second), "45 seconds from now"},
-	}
+			BeforeEach(func() {
+				formatter = humane.TimeFormatter{}
+			})
 
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			if got := f.Format(c.when, base); got != c.want {
-				t.Errorf("Format(%v, base) = %q, want %q", c.when, got, c.want)
-			}
+			Context("just now", func() {
+				BeforeEach(func() { when = base })
+
+				It("displays 0 seconds ago", func() {
+					Expect(formatter.Format(when, base)).To(Equal("0 seconds ago"))
+				})
+			})
+
+			Context("1 second ago", func() {
+				BeforeEach(func() { when = base.Add(-1 * time.Second) })
+
+				It("displays 1 second ago, singular", func() {
+					Expect(formatter.Format(when, base)).To(Equal("1 second ago"))
+				})
+			})
+
+			Context("45 seconds ago", func() {
+				BeforeEach(func() { when = base.Add(-45 * time.Second) })
+
+				It("displays 45 seconds ago", func() {
+					Expect(formatter.Format(when, base)).To(Equal("45 seconds ago"))
+				})
+			})
+
+			Context("45 seconds from now", func() {
+				BeforeEach(func() { when = base.Add(45 * time.Second) })
+
+				It("displays 45 seconds from now", func() {
+					Expect(formatter.Format(when, base)).To(Equal("45 seconds from now"))
+				})
+			})
 		})
-	}
-}
+	})
+})
