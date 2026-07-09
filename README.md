@@ -21,9 +21,8 @@ go get github.com/woodie/humane
 import "github.com/woodie/humane"
 
 sizeFormatter := humane.SizeFormatter{}
-sizeFormatter.Format(225935) // "226 KB" -- 1000-based math, capitalized
-                             // units, matching Finder, not the SI-correct
-                             // lowercase "kB" or 1024-based "KiB"
+sizeFormatter.Format(225935)
+// "226 KB" -- 1000-based math, capitalized units, matching Mac Finder
 
 timeFormatter := humane.NewTimeFormatter() // CollapseMinute: true
 timeFormatter.Format(scannedAt, time.Now())
