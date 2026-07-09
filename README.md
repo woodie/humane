@@ -5,9 +5,33 @@
 [![Release](https://img.shields.io/github/v/release/woodie/humane.svg)](https://github.com/woodie/humane/releases/latest)
 [![License](https://img.shields.io/github/license/woodie/humane.svg)](LICENSE)
 
-Swift's file sizes and relative dates for Go
+Getting human-readable file sizes with 1000-based math
+(as the Mac Finder displays) and relative times worded the way Swift's
+`RelativeDateTimeFormatter` does turned out to be a real challenge to get
+both right and simple. The `humane` library exists so a Go application can share
+consistent size and time formatting with a Swift application, instead of
+reaching for a library whose output doesn't match Swift's or that's
+complicated to drop in.
 
-Finder-accurate file sizes and relative dates for Go, modeled on Swift's [`ByteCountFormatter`](https://developer.apple.com/documentation/foundation/bytecountformatter) and [`RelativeDateTimeFormatter`](https://developer.apple.com/documentation/foundation/relativedatetimeformatter) -- not literal ports (both are closed-source), but the same idea and the same wording: a small, configurable formatter object instead of a bare function.
+```go
+import "github.com/woodie/humane"
+
+humane.SizeFormatter{}.Format(225935) // "226 KB"
+
+timeFormatter := humane.NewTimeFormatter()
+timeFormatter.Format(time.Now().Add(-3*time.Minute), time.Now()) // "3 minutes ago"
+```
+
+Corresponding functions in Swift will have consistent output.
+
+```swift
+import Foundation
+
+ByteCountFormatter.string(fromByteCount: Int64(225935), countStyle: .file) // "226 KB"
+
+let formatter = RelativeDateTimeFormatter(); formatter.unitsStyle = .full
+formatter.localizedString(for: time, relativeTo: now) // "3 minutes ago"
+```
 
 ## Install
 
@@ -15,46 +39,9 @@ Finder-accurate file sizes and relative dates for Go, modeled on Swift's [`ByteC
 go get github.com/woodie/humane
 ```
 
-## Usage
-
-```go
-import "github.com/woodie/humane"
-
-sizeFormatter := humane.SizeFormatter{}
-sizeFormatter.Format(225935)
-// "226 KB" -- 1000-based math, capitalized units, matching Mac Finder
-
-timeFormatter := humane.NewTimeFormatter() // CollapseMinute: true
-timeFormatter.Format(scannedAt, time.Now())
-// "3 minutes ago" / "in 3 minutes" / "less than a minute ago"
-```
-
-`SizeFormatter{}`'s zero value is ready to use. `TimeFormatter{}`'s zero
-value has `CollapseMinute: false` (second-level granularity under a
-minute) since Go can't default a bool field to `true` from a bare
-struct literal -- use `NewTimeFormatter()`, or set the field explicitly,
-for the collapsed default described above.
-
-## Purpose
-
-This library emulates Swift's ByteCountFormatter and RelativeDateTimeFormatter.
-
-```swift
-humanSize = ByteCountFormatter.string(fromByteCount: Int64(size), countStyle: .file)
-
-if abs(now.timeIntervalSince(time)) < 30 {
-    timeAgo = "less than a minute ago"
-} else {
-    let formatter = RelativeDateTimeFormatter()
-    formatter.unitsStyle = .full
-    timeAgo = formatter.localizedString(for: time, relativeTo: now)
-}
-```
-
 ## Scope
 
-Only what lambada and scandalous actually need today: Finder's `.file`
-byte-count style, and a numeric (non-calendar-aware) relative time
-style. `ByteCountFormatter`'s `allowedUnits`/alternate `countStyle`s and
-`RelativeDateTimeFormatter`'s `.named` style (`"yesterday"`, calendar-
-boundary-aware) aren't implemented -- contributions welcome.
+Finder's `.file` byte-count style, and a numeric (non-calendar-aware)
+relative time style -- that's the whole surface area today.
+`AllowedUnits`/alternate `CountStyle`s and `.named` style (`"yesterday"`,
+calendar-boundary-aware) aren't implemented -- contributions welcome.
