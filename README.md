@@ -35,6 +35,22 @@ minute) since Go can't default a bool field to `true` from a bare
 struct literal -- use `NewTimeFormatter()`, or set the field explicitly,
 for the collapsed default described above.
 
+## Purpose
+
+This library emulates Swift's ByteCountFormatter and RelativeDateTimeFormatter.
+
+```swift
+humanSize = ByteCountFormatter.string(fromByteCount: Int64(size), countStyle: .file)
+
+if abs(now.timeIntervalSince(time)) < 30 {
+    timeAgo = "less than a minute ago"
+} else {
+    let formatter = RelativeDateTimeFormatter()
+    formatter.unitsStyle = .full
+    timeAgo = formatter.localizedString(for: time, relativeTo: now)
+}
+```
+
 ## Scope
 
 Only what lambada and scandalous actually need today: Finder's `.file`
