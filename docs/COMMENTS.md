@@ -35,11 +35,13 @@ Returns bytes as a Finder-style human-readable string.
 ## time.go
 
 ### `TimeFormatter` (struct)
-Formats one time relative to another the way Finder-adjacent tools do:
-symmetric "X ago" / "X from now" phrasing, with no "about" prefix on the
-hour bucket -- Swift's RelativeDateTimeFormatter has no such prefix
-either, and Go's justincampbell/timeago (which does add one) is exactly
-what this package replaces.
+Formats one time relative to another the way RelativeDateTimeFormatter
+does: asymmetric "X ago" / "in X" phrasing (matched exactly, not
+"X from now" -- an earlier symmetric wording was found to be an
+unforced departure from the very API this package is modeled on), with
+no "about" prefix on the hour bucket -- Swift's RelativeDateTimeFormatter
+has no such prefix either, and Go's justincampbell/timeago (which does
+add one) is exactly what this package replaces.
 
 The zero value has CollapseMinute set to false (second-level granularity
 for anything under a minute); use NewTimeFormatter for the collapsed
@@ -50,12 +52,13 @@ not use it.
 
 ### `TimeFormatter.CollapseMinute`
 Renders any duration under 60 seconds as "less than a minute ago" /
-"less than a minute from now" instead of counting seconds. Rails'
+"in less than a minute" instead of counting seconds. Rails'
 distance_of_time_in_words, Go's justincampbell/timeago, and zouk's own
 RelativeDateTimeFormatter wrapper all do this in practice -- Swift's
 formatter has no such bucket natively, so there's no "pure" behavior
 being overridden here, just a convenience every real reference already
-reaches for.
+reaches for. The future phrasing follows the same asymmetric "in X"
+pattern as the counted buckets below, not a symmetric "X from now".
 
 ### `NewTimeFormatter`
 Returns a TimeFormatter with CollapseMinute enabled, the recommended
@@ -67,6 +70,6 @@ Returns t relative to relativeTo as a human-readable string.
     f := NewTimeFormatter()
     f.Format(t, t)                    == "less than a minute ago"
     f.Format(t, t.Add(3*time.Minute))  == "3 minutes ago"
-    f.Format(t, t.Add(-3*time.Minute)) == "3 minutes from now"
+    f.Format(t, t.Add(-3*time.Minute)) == "in 3 minutes"
     f.Format(t, t.Add(15*time.Hour))   == "15 hours ago"
     f.Format(t, t.Add(30*time.Hour))   == "1 day ago"

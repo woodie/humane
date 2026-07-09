@@ -28,7 +28,7 @@ func (f TimeFormatter) Format(t, relativeTo time.Time) string {
 	switch {
 	case f.CollapseMinute && d < time.Minute:
 		if future {
-			return "less than a minute from now"
+			return "in less than a minute"
 		}
 		return "less than a minute ago"
 	case d < time.Minute:
@@ -42,7 +42,7 @@ func (f TimeFormatter) Format(t, relativeTo time.Time) string {
 	}
 
 	if future {
-		return text + " from now"
+		return "in " + text
 	}
 	return text + " ago"
 }

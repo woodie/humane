@@ -59,19 +59,25 @@ is the actual design lineage here. The Ruby sibling is `humane-ruby` rather than
   integer part is a single digit, none once it hits two), just with 1000-based
   math (unchanged from `go-humanize`) and capitalized labels (`go-humanize` uses
   lowercase `kB`).
-- **`TimeFormatter`**: symmetric `"X ago"` / `"X from now"` wording -- a
-  deliberate departure from `RelativeDateTimeFormatter`'s actual asymmetric
-  output (`"X ago"` / `"in X"`), not an oversight. No `"about"` prefix on the
-  hour bucket (Go's `justincampbell/timeago`, still in `lambada`
+- **`TimeFormatter`**: asymmetric `"X ago"` / `"in X"` wording, matching
+  `RelativeDateTimeFormatter`'s actual output exactly. `v0.1.0` shipped with
+  symmetric `"X ago"` / `"X from now"` wording instead, documented at the time
+  as "a deliberate departure, not an oversight" -- reverted in `v0.2.0` once it
+  became clear that departure contradicted this library's own premise
+  (matching what Swift/Finder-adjacent APIs actually do, the same bar
+  `SizeFormatter` was held to via real-hardware comparison). No `"about"`
+  prefix on the hour bucket (Go's `justincampbell/timeago`, still in `lambada`
   pre-integration, adds one; Swift's formatter doesn't either). `DateTimeStyle`/
   `.named` (`"yesterday"`, calendar-boundary-aware) isn't implemented -- genuine
   complexity, not trivial, and nothing downstream needs it yet.
 - **`CollapseMinute`** (bool, default-intended `true`): renders anything under
-  60 seconds as `"less than a minute ago"`/`"...from now"`. Doesn't exist in
-  `RelativeDateTimeFormatter` at all -- zouk's own `ScanEntry.timeAgo` bolts a
-  manual `< 30`-second clamp on top of the formatter for exactly this reason.
-  Every real reference (Rails, Go's `timeago`, zouk's workaround) does this in
-  practice, so there's no "pure Swift" behavior being overridden.
+  60 seconds as `"less than a minute ago"`/`"in less than a minute"`. Doesn't
+  exist in `RelativeDateTimeFormatter` at all -- zouk's own `ScanEntry.timeAgo`
+  bolts a manual `< 30`-second clamp on top of the formatter for exactly this
+  reason. Every real reference (Rails, Go's `timeago`, zouk's workaround) does
+  this in practice, so there's no "pure Swift" behavior being overridden; the
+  future-side wording follows the same asymmetric `"in X"` pattern as the
+  counted buckets.
 - **Go's zero-value gotcha**: `TimeFormatter{}`'s zero value has
   `CollapseMinute: false` (Go can't default a bare `bool` field to `true` from a
   struct literal) -- second-level granularity, not the collapsed default.
@@ -100,10 +106,20 @@ released as `lambada` `2.2.0` -- confirmed via `go test ./...`, 44/44
 passing. `humane-ruby` is the published Ruby sibling, integrated into
 `scandalous` the same way, released as `scandalous` `2.2.0`.
 
+`v0.2.0`: `TimeFormatter`'s future-side wording changed from symmetric
+`"X from now"` to asymmetric `"in X"`, matching `RelativeDateTimeFormatter`
+exactly -- see "Design decisions" above. Breaking change to the string
+output; `lambada` and `scandalous` (and their test suites, and zouk's own
+`ScanEntry` if it ever compares wording) need a follow-up pass once this
+is tagged and published, since they're currently locked to the old
+`"X from now"` wording.
+
 ## Next up
 
-Nothing outstanding. If scope ever needs to grow: `SizeFormatter` has no
-`AllowedUnits`/`CountStyle` (Finder's style is the only one anything
-downstream needs today), and `TimeFormatter` has no `.named` style
-(`"yesterday"`, calendar-boundary-aware) -- both left out deliberately
-per "Design decisions" above, not gaps to fill without a real need.
+Nothing outstanding on `SizeFormatter`/`TimeFormatter` themselves. If
+scope ever needs to grow: `SizeFormatter` has no `AllowedUnits`/
+`CountStyle` (Finder's style is the only one anything downstream needs
+today), and `TimeFormatter` has no `.named` style (`"yesterday"`,
+calendar-boundary-aware) -- both left out deliberately per "Design
+decisions" above, not gaps to fill without a real need. Outstanding:
+propagate the `v0.2.0` wording change into `lambada` and `scandalous`.

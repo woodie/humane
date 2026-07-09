@@ -90,16 +90,16 @@ var _ = Describe("TimeFormatter", func() {
 			Context("45 seconds from now", func() {
 				BeforeEach(func() { when = base.Add(45 * time.Second) })
 
-				It("displays less than a minute from now", func() {
-					Expect(formatter.Format(when, base)).To(Equal("less than a minute from now"))
+				It("displays in less than a minute", func() {
+					Expect(formatter.Format(when, base)).To(Equal("in less than a minute"))
 				})
 			})
 
 			Context("3 minutes from now", func() {
 				BeforeEach(func() { when = base.Add(3 * time.Minute) })
 
-				It("displays 3 minutes from now", func() {
-					Expect(formatter.Format(when, base)).To(Equal("3 minutes from now"))
+				It("displays in 3 minutes", func() {
+					Expect(formatter.Format(when, base)).To(Equal("in 3 minutes"))
 				})
 			})
 		})
@@ -141,8 +141,8 @@ var _ = Describe("TimeFormatter", func() {
 			Context("45 seconds from now", func() {
 				BeforeEach(func() { when = base.Add(45 * time.Second) })
 
-				It("displays 45 seconds from now", func() {
-					Expect(formatter.Format(when, base)).To(Equal("45 seconds from now"))
+				It("displays in 45 seconds", func() {
+					Expect(formatter.Format(when, base)).To(Equal("in 45 seconds"))
 				})
 			})
 		})
