@@ -33,10 +33,32 @@ let formatter = RelativeDateTimeFormatter(); formatter.unitsStyle = .full
 formatter.localizedString(for: time, relativeTo: now) // "3 minutes ago"
 ```
 
+If you're writing Swift directly rather than calling Foundation by hand,
+[`humane-swift`](https://github.com/woodie/humane-swift) wraps these same two
+formatters with the identical API shape -- including the
+`includeSeconds`/`approximate` options below.
+
 ## Install
 
 ```
 go get github.com/woodie/humane
+```
+
+## Beyond Foundation's defaults
+
+Two options on `TimeFormatter`, both off by default so it matches
+`RelativeDateTimeFormatter` exactly out of the box:
+
+- `IncludeSeconds` (default `false`): below a minute, collapses to "less than a
+  minute ago"/"in less than a minute" instead of an exact second count. Named
+  after ActionView's `include_seconds`, which defaults the same way.
+- `Approximate` (default `false`): prefixes "about"/"in about" on buckets of an
+  hour or larger, the way ActionView's `distance_of_time_in_words` does past
+  that same boundary -- for a render that can't refresh itself and shouldn't
+  overstate its own precision.
+
+```go
+humane.TimeFormatter{Approximate: true}.Format(t.Add(-15*time.Hour), t) // "about 15 hours ago"
 ```
 
 ## Scope
