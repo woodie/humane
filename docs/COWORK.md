@@ -150,26 +150,35 @@ https://github.com/woodie/humane/releases/tag/v0.3.0.
 `v0.4.0`: `TimeFormatter` gains `Approximate` (zero value `false`) -- see
 "Design decisions" above and `docs/releases/v0.4.0.md`. Additive, not
 breaking. Ported from `humane-swift`'s `v0.1.0` option, following
-`humane-ruby`'s identical `v0.4.0` addition (already tagged and published to
-RubyGems, and wired into `scandalous`'s `time_ago` helper). New Ginkgo
-context added to `time_test.go` covering the hour boundary, a 15-hour and
-30-hour past case, and a 3-hour future case. Not yet confirmed via real
-`go test`/`ginkgo-fd` -- needs a run on woodie's Mac before tagging.
+`humane-ruby`'s identical `v0.4.0` addition (tagged and published to
+RubyGems, wired into `scandalous`'s `time_ago` helper, released as
+`scandalous` `2.5.0`). New Ginkgo context added to `time_test.go` covering
+the hour boundary, a 15-hour and 30-hour past case, and a 3-hour future
+case. Confirmed via real `go test ./...`/`ginkgo-fd` on woodie's Mac, then
+tagged, pushed, and released: https://github.com/woodie/humane/releases/tag/v0.4.0.
+
+Wired into `lambada`'s `timeFormatter` in the same window (`Approximate:
+true`, mirroring `scandalous`), `go.mod`/`go.sum` bumped to `v0.4.0` via a
+real `go get`/`go mod tidy`, confirmed via `go test ./...`/`ginkgo-fd`
+(45/45) plus `npm run check` (JS lint/tests, `golangci-lint`), released as
+`lambada` `2.5.0`, and deployed to the Pi -- confirmed live (`"about 14
+hours ago"`).
+
+Also this session: README's Swift code sample (raw `ByteCountFormatter`/
+`RelativeDateTimeFormatter` calls) now links to `humane-swift` directly
+instead of only showing bare Foundation calls, and gained the "Beyond
+Foundation's defaults" section documenting `IncludeSeconds`/`Approximate`
+that this README had never had (unlike `humane-ruby`'s and
+`humane-swift`'s READMEs, which already did).
 
 ## Next up
 
-1. Confirm `v0.4.0`'s `Approximate` addition via real `go test ./...`/
-   `ginkgo-fd` on woodie's Mac, then tag, push, and release.
-2. Wire `Approximate: true` into `lambada`'s `timeFormatter` (mirroring
-   `scandalous`'s `time_ago` opt-in), bump `lambada`'s `go.mod` to
-   `v0.4.0`, and update its tests -- `go.sum` needs a real `go get`/
-   `go mod tidy`, not a hand edit.
-3. `SizeFormatter` has no `AllowedUnits`/`CountStyle` (Finder's style is the
+1. `SizeFormatter` has no `AllowedUnits`/`CountStyle` (Finder's style is the
    only one anything downstream needs today), and `TimeFormatter` has no
    `.named` style (`"yesterday"`, calendar-boundary-aware) -- both left out
    deliberately per "Design decisions" above, not gaps to fill without a
    real need.
-4. `humane-swift`'s real-hardware testing found `ByteCountFormatter`'s actual
+2. `humane-swift`'s real-hardware testing found `ByteCountFormatter`'s actual
    output diverges from this package's hand-rolled 2-significant-digit math
    in a few cases (zero bytes, byte-scale labels, some GB-scale precision) --
    see `humane-swift/docs/COWORK.md` "Current state" for specifics. Worth
