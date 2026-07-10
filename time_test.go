@@ -147,6 +147,65 @@ var _ = Describe("TimeFormatter", func() {
 			})
 		})
 
+		Context("with Approximate: true", func() {
+			var (
+				formatter humane.TimeFormatter
+				when      time.Time
+			)
+
+			BeforeEach(func() {
+				formatter = humane.TimeFormatter{Approximate: true}
+			})
+
+			Context("59 minutes ago", func() {
+				BeforeEach(func() { when = base.Add(-59 * time.Minute) })
+
+				It("leaves sub-hour buckets untouched", func() {
+					Expect(formatter.Format(when, base)).To(Equal("59 minutes ago"))
+				})
+			})
+
+			Context("exactly 1 hour ago", func() {
+				BeforeEach(func() { when = base.Add(-1 * time.Hour) })
+
+				It("displays about 1 hour ago", func() {
+					Expect(formatter.Format(when, base)).To(Equal("about 1 hour ago"))
+				})
+			})
+
+			Context("15 hours ago", func() {
+				BeforeEach(func() { when = base.Add(-15 * time.Hour) })
+
+				It("displays about 15 hours ago", func() {
+					Expect(formatter.Format(when, base)).To(Equal("about 15 hours ago"))
+				})
+			})
+
+			Context("30 hours ago", func() {
+				BeforeEach(func() { when = base.Add(-30 * time.Hour) })
+
+				It("displays about 1 day ago", func() {
+					Expect(formatter.Format(when, base)).To(Equal("about 1 day ago"))
+				})
+			})
+
+			Context("3 minutes from now", func() {
+				BeforeEach(func() { when = base.Add(3 * time.Minute) })
+
+				It("leaves sub-hour buckets untouched", func() {
+					Expect(formatter.Format(when, base)).To(Equal("in 3 minutes"))
+				})
+			})
+
+			Context("3 hours from now", func() {
+				BeforeEach(func() { when = base.Add(3 * time.Hour) })
+
+				It("displays in about 3 hours", func() {
+					Expect(formatter.Format(when, base)).To(Equal("in about 3 hours"))
+				})
+			})
+		})
+
 		Describe("TimeFormatter{} vs NewTimeFormatter()", func() {
 			It("produce identical output, now that IncludeSeconds' zero value is the recommended default", func() {
 				Expect(humane.TimeFormatter{}.Format(base, base)).To(Equal(humane.NewTimeFormatter().Format(base, base)))

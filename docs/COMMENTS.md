@@ -38,10 +38,11 @@ Returns bytes as a Finder-style human-readable string.
 Formats one time relative to another the way RelativeDateTimeFormatter
 does: asymmetric "X ago" / "in X" phrasing (matched exactly, not
 "X from now" -- an earlier symmetric wording was found to be an
-unforced departure from the very API this package is modeled on), with
-no "about" prefix on the hour bucket -- Swift's RelativeDateTimeFormatter
-has no such prefix either, and Go's justincampbell/timeago (which does
-add one) is exactly what this package replaces.
+unforced departure from the very API this package is modeled on). No
+"about" prefix on the hour bucket by default -- Swift's
+RelativeDateTimeFormatter has no such prefix either, and Go's
+justincampbell/timeago (which does add one) is exactly what this package
+replaces -- but see Approximate below for an explicit opt-in.
 
 Renamed CollapseMinute to IncludeSeconds in v0.3.0 (see
 docs/releases/v0.3.0.md) -- an exact polarity inversion, which happens to
@@ -69,6 +70,25 @@ Returns a TimeFormatter with the recommended default -- kept for API
 stability and parity with the other two languages' constructors, even
 though it's now equivalent to TimeFormatter{} (see above).
 
+### `TimeFormatter.Approximate`
+Added in v0.4.0 (see docs/releases/v0.4.0.md). When true, prefixes
+"about"/"in about" onto any bucket of an hour or larger -- matching
+ActionView's distance_of_time_in_words past that same boundary. Sub-hour
+buckets are untouched either way. Defaults to false, matching Foundation's
+raw output.
+
+Ported from humane-swift's identically-named, identically-defaulted
+option (v0.1.0), for contexts that render once and can't refresh (a web
+response) where a precise-looking "15 hours ago" overstates the value's
+actual precision.
+
+Format already builds a bare quantity phrase (text) before wrapping it in
+"X ago"/"in X", so prefixing "about " onto text first composes correctly
+in both directions with no string surgery -- the same shape humane-ruby's
+#string uses. Swift's TimeFormatter has to post-process
+RelativeDateTimeFormatter's already-complete phrase instead, since
+Foundation hands back the whole sentence at once.
+
 ### `TimeFormatter.Format`
 Returns t relative to relativeTo as a human-readable string.
 
@@ -78,3 +98,8 @@ Returns t relative to relativeTo as a human-readable string.
     f.Format(t, t.Add(-3*time.Minute)) == "in 3 minutes"
     f.Format(t, t.Add(15*time.Hour))   == "15 hours ago"
     f.Format(t, t.Add(30*time.Hour))   == "1 day ago"
+
+    a := TimeFormatter{Approximate: true}
+    a.Format(t, t.Add(15*time.Hour))   == "about 15 hours ago"
+    a.Format(t, t.Add(30*time.Hour))   == "about 1 day ago"
+    a.Format(t, t.Add(-3*time.Hour))   == "in about 3 hours"

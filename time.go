@@ -9,6 +9,8 @@ import (
 type TimeFormatter struct {
 	// IncludeSeconds shows exact seconds under a minute instead of collapsing to "less than a minute ago/in less than a minute". Zero value (false) matches ActionView's include_seconds default.
 	IncludeSeconds bool
+	// Approximate prefixes "about"/"in about" on buckets of an hour or more, matching ActionView's distance_of_time_in_words past that same boundary. Zero value (false) matches Foundation's raw output.
+	Approximate bool
 }
 
 // NewTimeFormatter returns a TimeFormatter with the recommended default -- now identical to the zero value, since IncludeSeconds' zero value (false) already is that default.
@@ -39,6 +41,10 @@ func (f TimeFormatter) Format(t, relativeTo time.Time) string {
 		text = pluralize(int(d.Hours()+0.5), "hour")
 	default:
 		text = pluralize(int(d.Hours()/24+0.5), "day")
+	}
+
+	if f.Approximate && d >= time.Hour {
+		text = "about " + text
 	}
 
 	if future {

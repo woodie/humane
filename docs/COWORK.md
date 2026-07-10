@@ -66,9 +66,10 @@ is the actual design lineage here. The Ruby sibling is `humane-ruby` rather than
   became clear that departure contradicted this library's own premise
   (matching what Swift/Finder-adjacent APIs actually do, the same bar
   `SizeFormatter` was held to via real-hardware comparison). No `"about"`
-  prefix on the hour bucket (Go's `justincampbell/timeago`, still in `lambada`
-  pre-integration, adds one; Swift's formatter doesn't either). `DateTimeStyle`/
-  `.named` (`"yesterday"`, calendar-boundary-aware) isn't implemented -- genuine
+  prefix on the hour bucket by default (Go's `justincampbell/timeago`, still
+  in `lambada` pre-integration, adds one; Swift's formatter doesn't either) --
+  see `Approximate` below for the `v0.4.0` opt-in. `DateTimeStyle`/`.named`
+  (`"yesterday"`, calendar-boundary-aware) isn't implemented -- genuine
   complexity, not trivial, and nothing downstream needs it yet.
 - **`IncludeSeconds`** (bool, zero-value/default-intended `false`; renamed from
   `CollapseMinute` in `v0.3.0`, see `docs/releases/v0.3.0.md`): when `false`,
@@ -90,6 +91,19 @@ is the actual design lineage here. The Ruby sibling is `humane-ruby` rather than
   are identical as of `v0.3.0`, and a test locks that in. `NewTimeFormatter()`
   is kept for API stability and parity with the other languages' constructors,
   not because the footgun still exists.
+- **`Approximate`** (bool, zero-value/default `false`; added in `v0.4.0`, see
+  `docs/releases/v0.4.0.md`): prefixes `"about"`/`"in about"` onto any bucket
+  of an hour or larger, matching ActionView's `distance_of_time_in_words`
+  past that same boundary. Sub-hour buckets are untouched either way. Ported
+  from `humane-swift`'s identically-named, identically-defaulted option
+  (`v0.1.0`), for contexts that render once and can't refresh (a web
+  response) where a precise-looking `"15 hours ago"` overstates the value's
+  actual precision. `Format` already builds a bare quantity phrase (`text`)
+  before wrapping it in `"X ago"`/`"in X"`, so prefixing `"about "` onto
+  `text` composes correctly in both directions with no string surgery --
+  `humane-ruby`'s `#string` has the same shape. Swift's `TimeFormatter` has
+  to post-process `RelativeDateTimeFormatter`'s already-complete phrase
+  instead, since Foundation hands back the whole sentence at once.
 
 ## Sandbox limitation
 
@@ -127,25 +141,35 @@ As a side effect, this retires the long-standing Go zero-value gotcha:
 `TimeFormatter{}` and `NewTimeFormatter()` are now identical, since
 `IncludeSeconds`' zero value is itself the recommended default -- see
 "Design decisions" above and `docs/releases/v0.3.0.md`. `humane-ruby` picked
-up the identical rename in its own `v0.3.0` (committed and pushed, not yet
-tagged). Confirmed for real on woodie's Mac: `go test ./...` (`ok`) and
+up the identical rename in its own `v0.3.0`, tagged, pushed, and published
+to RubyGems. Confirmed for real on woodie's Mac: `go test ./...` (`ok`) and
 `ginkgo-fd` -- 23/23, including the new `TimeFormatter{} vs
-NewTimeFormatter()` equivalence spec. Pushed to `main`; not yet tagged.
+NewTimeFormatter()` equivalence spec. Tagged and released as `v0.3.0`:
+https://github.com/woodie/humane/releases/tag/v0.3.0.
+
+`v0.4.0`: `TimeFormatter` gains `Approximate` (zero value `false`) -- see
+"Design decisions" above and `docs/releases/v0.4.0.md`. Additive, not
+breaking. Ported from `humane-swift`'s `v0.1.0` option, following
+`humane-ruby`'s identical `v0.4.0` addition (already tagged and published to
+RubyGems, and wired into `scandalous`'s `time_ago` helper). New Ginkgo
+context added to `time_test.go` covering the hour boundary, a 15-hour and
+30-hour past case, and a 3-hour future case. Not yet confirmed via real
+`go test`/`ginkgo-fd` -- needs a run on woodie's Mac before tagging.
 
 ## Next up
 
-1. Tag and push `v0.3.0` (confirmed via `go test ./...`/`ginkgo-fd`, 23/23).
-2. Propagate both the `v0.2.0` wording change and `v0.3.0` rename into
-   `lambada` and `scandalous`.
-3. Decide whether `humane-swift`'s `approximate` option (ActionView-inspired
-   "about"/"in about" prefixing on hour-plus buckets) gets backported here
-   too -- see `humane-swift/docs/COWORK.md` "Next up".
-4. `SizeFormatter` has no `AllowedUnits`/`CountStyle` (Finder's style is the
+1. Confirm `v0.4.0`'s `Approximate` addition via real `go test ./...`/
+   `ginkgo-fd` on woodie's Mac, then tag, push, and release.
+2. Wire `Approximate: true` into `lambada`'s `timeFormatter` (mirroring
+   `scandalous`'s `time_ago` opt-in), bump `lambada`'s `go.mod` to
+   `v0.4.0`, and update its tests -- `go.sum` needs a real `go get`/
+   `go mod tidy`, not a hand edit.
+3. `SizeFormatter` has no `AllowedUnits`/`CountStyle` (Finder's style is the
    only one anything downstream needs today), and `TimeFormatter` has no
    `.named` style (`"yesterday"`, calendar-boundary-aware) -- both left out
    deliberately per "Design decisions" above, not gaps to fill without a
    real need.
-5. `humane-swift`'s real-hardware testing found `ByteCountFormatter`'s actual
+4. `humane-swift`'s real-hardware testing found `ByteCountFormatter`'s actual
    output diverges from this package's hand-rolled 2-significant-digit math
    in a few cases (zero bytes, byte-scale labels, some GB-scale precision) --
    see `humane-swift/docs/COWORK.md` "Current state" for specifics. Worth
