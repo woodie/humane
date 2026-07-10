@@ -127,14 +127,14 @@ As a side effect, this retires the long-standing Go zero-value gotcha:
 `TimeFormatter{}` and `NewTimeFormatter()` are now identical, since
 `IncludeSeconds`' zero value is itself the recommended default -- see
 "Design decisions" above and `docs/releases/v0.3.0.md`. `humane-ruby` picked
-up the identical rename in its own `v0.3.0` (already committed, not yet
-tagged). Not yet confirmed via `go test ./...` -- no Go toolchain in this
-sandbox, made by inspection only; needs a real run on woodie's Mac before
-tagging.
+up the identical rename in its own `v0.3.0` (committed and pushed, not yet
+tagged). Confirmed for real on woodie's Mac: `go test ./...` (`ok`) and
+`ginkgo-fd` -- 23/23, including the new `TimeFormatter{} vs
+NewTimeFormatter()` equivalence spec. Pushed to `main`; not yet tagged.
 
 ## Next up
 
-1. Confirm `v0.3.0` via `go test ./...` on real hardware, then tag and push.
+1. Tag and push `v0.3.0` (confirmed via `go test ./...`/`ginkgo-fd`, 23/23).
 2. Propagate both the `v0.2.0` wording change and `v0.3.0` rename into
    `lambada` and `scandalous`.
 3. Decide whether `humane-swift`'s `approximate` option (ActionView-inspired
