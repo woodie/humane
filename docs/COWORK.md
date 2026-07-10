@@ -171,6 +171,18 @@ Foundation's defaults" section documenting `IncludeSeconds`/`Approximate`
 that this README had never had (unlike `humane-ruby`'s and
 `humane-swift`'s READMEs, which already did).
 
+`v0.5.0` (unreleased): `Format` reworked to match the ActionView
+`distance_of_time_in_words` bucket table quoted in `humane-ruby` issue #1
+exactly, through the "1 day" row -- see `humane-ruby`'s own `docs/COWORK.md`
+for the full writeup and rationale, ported here identically. `IncludeSeconds:
+false`'s collapse cutoff moved 60s -> 30s, `Approximate` narrowed from "any
+bucket >= 1 hour" to exactly the hour-scale buckets, and `Format` now buckets
+off `distanceInMinutes` rather than raw seconds re-divided per unit (fixes a
+latent bug where `59:59:59` rounded to "60 minutes ago"). New boundary-pair
+specs added covering all six table cutoffs. Confirmed for real on woodie's
+Mac: `go test ./...` (`ok`) and `ginkgo-fd` -- 36/36 passing, alongside
+`humane-ruby`'s identical change (35/35) in the same session.
+
 ## Next up
 
 1. `SizeFormatter` has no `AllowedUnits`/`CountStyle` (Finder's style is the

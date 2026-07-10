@@ -55,14 +55,12 @@ that asymmetry is gone.
 
 ### `TimeFormatter.IncludeSeconds`
 When false (the zero value and the default), renders any duration under
-60 seconds as "less than a minute ago" / "in less than a minute" instead
-of counting seconds. Rails' distance_of_time_in_words, Go's
-justincampbell/timeago, and zouk's own RelativeDateTimeFormatter wrapper
-all do this in practice -- Swift's formatter has no such bucket natively,
-so there's no "pure" behavior being overridden here, just a convenience
-every real reference already reaches for. The future phrasing follows
-the same asymmetric "in X" pattern as the counted buckets below, not a
-symmetric "X from now". Named and defaulted after ActionView's own
+30 seconds as "less than a minute ago" / "in less than a minute" instead
+of counting seconds -- matching the first row of ActionView's
+distance_of_time_in_words bucket table (see Format below), not an
+arbitrary round number. The future phrasing follows the same asymmetric
+"in X" pattern as the counted buckets below, not a symmetric
+"X from now". Named and defaulted after ActionView's own
 include_seconds, which defaults the same way.
 
 ### `NewTimeFormatter`
@@ -71,11 +69,18 @@ stability and parity with the other two languages' constructors, even
 though it's now equivalent to TimeFormatter{} (see above).
 
 ### `TimeFormatter.Approximate`
-Added in v0.4.0 (see docs/releases/v0.4.0.md). When true, prefixes
-"about"/"in about" onto any bucket of an hour or larger -- matching
-ActionView's distance_of_time_in_words past that same boundary. Sub-hour
-buckets are untouched either way. Defaults to false, matching Foundation's
-raw output.
+Added in v0.4.0 (see docs/releases/v0.4.0.md); narrowed in a later pass
+to match ActionView's actual bucket table instead of "any bucket >= 1
+hour". When true, prefixes "about"/"in about" onto exactly the
+hour-scale buckets (1 hour, and 2..24 hours) -- matching ActionView's
+distance_of_time_in_words wording for those buckets, and no others.
+ActionView's own table has no "about" on the day bucket (or week/month/
+year buckets, out of scope here), so neither does this -- the earlier
+"any bucket >= 1 hour" rule was a simplification that happened to also
+prefix "about" onto whole-day deltas, which no real reference does.
+Sub-hour buckets are untouched either way. Defaults to false, matching
+Foundation's raw output. See humane-ruby issue #1
+(https://github.com/woodie/humane-ruby/issues/1) for the source table.
 
 Ported from humane-swift's identically-named, identically-defaulted
 option (v0.1.0), for contexts that render once and can't refresh (a web
@@ -85,15 +90,27 @@ actual precision.
 Format already builds a bare quantity phrase (text) before wrapping it in
 "X ago"/"in X", so prefixing "about " onto text first composes correctly
 in both directions with no string surgery -- the same shape humane-ruby's
-#string uses. Swift's TimeFormatter has to post-process
-RelativeDateTimeFormatter's already-complete phrase instead, since
-Foundation hands back the whole sentence at once.
+#string uses. humane-swift's TimeFormatter now does the same (it used to
+post-process RelativeDateTimeFormatter's already-complete phrase, but
+that formatter doesn't hit these specific cutoffs on its own).
 
 ### `TimeFormatter.Format`
+Buckets are chosen from distanceInMinutes (seconds/60, rounded once via
+`int(d.Minutes()+0.5)`), not by re-dividing raw seconds independently
+per unit. The old per-unit approach let rounding carry across a bucket
+boundary on its own -- 59:59:59 (< 1 hour, so the old code took the
+minutes branch) rounded to "60 minutes ago" instead of "1 hour ago".
+Computing distanceInMinutes once and switching on *that* is exactly how
+ActionView's own distance_of_time_in_words works, and is what produces
+its specific, non-obvious cutoffs: the "about 1 hour" bucket starts at
+44 minutes 30 seconds (not 60:00), and "about 2 hours" starts at 89:30,
+not 90:00.
+
 Returns t relative to relativeTo as a human-readable string.
 
     f := NewTimeFormatter()
     f.Format(t, t)                    == "less than a minute ago"
+    f.Format(t, t.Add(45*time.Second)) == "1 minute ago"
     f.Format(t, t.Add(3*time.Minute))  == "3 minutes ago"
     f.Format(t, t.Add(-3*time.Minute)) == "in 3 minutes"
     f.Format(t, t.Add(15*time.Hour))   == "15 hours ago"
@@ -101,5 +118,5 @@ Returns t relative to relativeTo as a human-readable string.
 
     a := TimeFormatter{Approximate: true}
     a.Format(t, t.Add(15*time.Hour))   == "about 15 hours ago"
-    a.Format(t, t.Add(30*time.Hour))   == "about 1 day ago"
+    a.Format(t, t.Add(30*time.Hour))   == "1 day ago"  // no "about" -- ActionView's table has none on the day bucket
     a.Format(t, t.Add(-3*time.Hour))   == "in about 3 hours"

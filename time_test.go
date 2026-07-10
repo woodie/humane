@@ -34,8 +34,8 @@ var _ = Describe("TimeFormatter", func() {
 			Context("45 seconds ago", func() {
 				BeforeEach(func() { when = base.Add(-45 * time.Second) })
 
-				It("displays less than a minute ago", func() {
-					Expect(formatter.Format(when, base)).To(Equal("less than a minute ago"))
+				It("rounds up to 1 minute ago (past the 30-second cutoff)", func() {
+					Expect(formatter.Format(when, base)).To(Equal("1 minute ago"))
 				})
 			})
 
@@ -90,8 +90,8 @@ var _ = Describe("TimeFormatter", func() {
 			Context("45 seconds from now", func() {
 				BeforeEach(func() { when = base.Add(45 * time.Second) })
 
-				It("displays in less than a minute", func() {
-					Expect(formatter.Format(when, base)).To(Equal("in less than a minute"))
+				It("rounds up to in 1 minute (past the 30-second cutoff)", func() {
+					Expect(formatter.Format(when, base)).To(Equal("in 1 minute"))
 				})
 			})
 
@@ -160,8 +160,8 @@ var _ = Describe("TimeFormatter", func() {
 			Context("59 minutes ago", func() {
 				BeforeEach(func() { when = base.Add(-59 * time.Minute) })
 
-				It("leaves sub-hour buckets untouched", func() {
-					Expect(formatter.Format(when, base)).To(Equal("59 minutes ago"))
+				It("prefixes about (59 minutes falls in the 45..89-minute 'about 1 hour' bucket)", func() {
+					Expect(formatter.Format(when, base)).To(Equal("about 1 hour ago"))
 				})
 			})
 
@@ -184,8 +184,8 @@ var _ = Describe("TimeFormatter", func() {
 			Context("30 hours ago", func() {
 				BeforeEach(func() { when = base.Add(-30 * time.Hour) })
 
-				It("displays about 1 day ago", func() {
-					Expect(formatter.Format(when, base)).To(Equal("about 1 day ago"))
+				It("does not prefix about on the day bucket (ActionView's table has no 'about 1 day')", func() {
+					Expect(formatter.Format(when, base)).To(Equal("1 day ago"))
 				})
 			})
 
@@ -202,6 +202,55 @@ var _ = Describe("TimeFormatter", func() {
 
 				It("displays in about 3 hours", func() {
 					Expect(formatter.Format(when, base)).To(Equal("in about 3 hours"))
+				})
+			})
+		})
+
+		// Boundary regression coverage for the ActionView distance_of_time_in_words bucket
+		// table this approximate-distance behavior ports, truncated at the "1 day" row
+		// since month/year buckets are out of scope. Each pair straddles a cutoff second
+		// from that table to lock in exactly where the wording flips.
+		Context("at the approximate-distance bucket table boundaries", func() {
+			Context("without Approximate", func() {
+				formatter := humane.NewTimeFormatter()
+
+				It("29s stays less than a minute, 30s rounds up to 1 minute", func() {
+					Expect(formatter.Format(base.Add(-29*time.Second), base)).To(Equal("less than a minute ago"))
+					Expect(formatter.Format(base.Add(-30*time.Second), base)).To(Equal("1 minute ago"))
+				})
+
+				It("89s stays 1 minute, 90s rounds up to 2 minutes", func() {
+					Expect(formatter.Format(base.Add(-89*time.Second), base)).To(Equal("1 minute ago"))
+					Expect(formatter.Format(base.Add(-90*time.Second), base)).To(Equal("2 minutes ago"))
+				})
+
+				It("44:29 stays 44 minutes, 44:30 rounds up to 1 hour", func() {
+					Expect(formatter.Format(base.Add(-(44*time.Minute+29*time.Second)), base)).To(Equal("44 minutes ago"))
+					Expect(formatter.Format(base.Add(-(44*time.Minute+30*time.Second)), base)).To(Equal("1 hour ago"))
+				})
+
+				It("89:29 stays 1 hour, 89:30 rounds up to 2 hours", func() {
+					Expect(formatter.Format(base.Add(-(89*time.Minute+29*time.Second)), base)).To(Equal("1 hour ago"))
+					Expect(formatter.Format(base.Add(-(89*time.Minute+30*time.Second)), base)).To(Equal("2 hours ago"))
+				})
+
+				It("23:59:29 stays 24 hours, 23:59:30 rounds up to 1 day", func() {
+					Expect(formatter.Format(base.Add(-(23*time.Hour+59*time.Minute+29*time.Second)), base)).To(Equal("24 hours ago"))
+					Expect(formatter.Format(base.Add(-(23*time.Hour+59*time.Minute+30*time.Second)), base)).To(Equal("1 day ago"))
+				})
+			})
+
+			Context("with Approximate: true", func() {
+				formatter := humane.TimeFormatter{Approximate: true}
+
+				It("44:29 has no about, 44:30 gains about (entering the hour bucket)", func() {
+					Expect(formatter.Format(base.Add(-(44*time.Minute+29*time.Second)), base)).To(Equal("44 minutes ago"))
+					Expect(formatter.Format(base.Add(-(44*time.Minute+30*time.Second)), base)).To(Equal("about 1 hour ago"))
+				})
+
+				It("23:59:29 keeps about, 23:59:30 drops about (entering the day bucket)", func() {
+					Expect(formatter.Format(base.Add(-(23*time.Hour+59*time.Minute+29*time.Second)), base)).To(Equal("about 24 hours ago"))
+					Expect(formatter.Format(base.Add(-(23*time.Hour+59*time.Minute+30*time.Second)), base)).To(Equal("1 day ago"))
 				})
 			})
 		})

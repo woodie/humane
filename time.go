@@ -9,7 +9,7 @@ import (
 type TimeFormatter struct {
 	// IncludeSeconds shows exact seconds under a minute instead of collapsing to "less than a minute ago/in less than a minute". Zero value (false) matches ActionView's include_seconds default.
 	IncludeSeconds bool
-	// Approximate prefixes "about"/"in about" on buckets of an hour or more, matching ActionView's distance_of_time_in_words past that same boundary. Zero value (false) matches Foundation's raw output.
+	// Approximate prefixes "about"/"in about" on the hour-scale buckets (1 hour, and 2..24 hours), matching ActionView's distance_of_time_in_words wording for those buckets. Zero value (false) matches Foundation's raw output. See docs/COMMENTS.md and humane-ruby issue #1 for the full bucket table this ports.
 	Approximate bool
 }
 
@@ -26,27 +26,47 @@ func (f TimeFormatter) Format(t, relativeTo time.Time) string {
 		d = -d
 	}
 
-	var text string
-	switch {
-	case !f.IncludeSeconds && d < time.Minute:
+	if !f.IncludeSeconds && d < 30*time.Second {
 		if future {
 			return "in less than a minute"
 		}
 		return "less than a minute ago"
-	case d < time.Minute:
-		text = pluralize(int(d.Seconds()), "second")
-	case d < time.Hour:
-		text = pluralize(int(d.Minutes()+0.5), "minute")
-	case d < 24*time.Hour:
-		text = pluralize(int(d.Hours()+0.5), "hour")
-	default:
-		text = pluralize(int(d.Hours()/24+0.5), "day")
 	}
 
-	if f.Approximate && d >= time.Hour {
+	if f.IncludeSeconds && d < time.Minute {
+		return wrap(pluralize(int(d.Seconds()), "second"), future)
+	}
+
+	// Buckets come from distanceInMinutes, not raw seconds re-divided per unit -- see docs/COMMENTS.md.
+	distanceInMinutes := int(d.Minutes() + 0.5)
+
+	var text string
+	var approximable bool
+	switch {
+	case distanceInMinutes == 1:
+		text = "1 minute"
+	case distanceInMinutes <= 44:
+		text = pluralize(distanceInMinutes, "minute")
+	case distanceInMinutes <= 89:
+		text = "1 hour"
+		approximable = true
+	case distanceInMinutes <= 1439:
+		text = pluralize(int(float64(distanceInMinutes)/60.0+0.5), "hour")
+		approximable = true
+	case distanceInMinutes <= 2519:
+		text = "1 day"
+	default:
+		text = pluralize(int(float64(distanceInMinutes)/1440.0+0.5), "day")
+	}
+
+	if f.Approximate && approximable {
 		text = "about " + text
 	}
 
+	return wrap(text, future)
+}
+
+func wrap(text string, future bool) string {
 	if future {
 		return "in " + text
 	}
