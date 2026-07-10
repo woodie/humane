@@ -13,7 +13,7 @@ var _ = Describe("TimeFormatter", func() {
 	base := time.Date(2026, 7, 8, 12, 0, 0, 0, time.UTC)
 
 	Describe("Format", func() {
-		Context("with CollapseMinute (the default)", func() {
+		Context("with IncludeSeconds: false (the default)", func() {
 			var (
 				formatter humane.TimeFormatter
 				when      time.Time
@@ -104,14 +104,14 @@ var _ = Describe("TimeFormatter", func() {
 			})
 		})
 
-		Context("with CollapseMinute: false", func() {
+		Context("with IncludeSeconds: true", func() {
 			var (
 				formatter humane.TimeFormatter
 				when      time.Time
 			)
 
 			BeforeEach(func() {
-				formatter = humane.TimeFormatter{}
+				formatter = humane.TimeFormatter{IncludeSeconds: true}
 			})
 
 			Context("just now", func() {
@@ -144,6 +144,12 @@ var _ = Describe("TimeFormatter", func() {
 				It("displays in 45 seconds", func() {
 					Expect(formatter.Format(when, base)).To(Equal("in 45 seconds"))
 				})
+			})
+		})
+
+		Describe("TimeFormatter{} vs NewTimeFormatter()", func() {
+			It("produce identical output, now that IncludeSeconds' zero value is the recommended default", func() {
+				Expect(humane.TimeFormatter{}.Format(base, base)).To(Equal(humane.NewTimeFormatter().Format(base, base)))
 			})
 		})
 	})

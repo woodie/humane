@@ -7,13 +7,13 @@ import (
 
 // TimeFormatter formats one time relative to another the way Finder-adjacent tools do.
 type TimeFormatter struct {
-	// CollapseMinute buckets anything under a minute as "less than a minute ago/from now".
-	CollapseMinute bool
+	// IncludeSeconds shows exact seconds under a minute instead of collapsing to "less than a minute ago/in less than a minute". Zero value (false) matches ActionView's include_seconds default.
+	IncludeSeconds bool
 }
 
-// NewTimeFormatter returns a TimeFormatter with CollapseMinute enabled, the recommended default.
+// NewTimeFormatter returns a TimeFormatter with the recommended default -- now identical to the zero value, since IncludeSeconds' zero value (false) already is that default.
 func NewTimeFormatter() TimeFormatter {
-	return TimeFormatter{CollapseMinute: true}
+	return TimeFormatter{}
 }
 
 // Format returns t relative to relativeTo as a human-readable string.
@@ -26,7 +26,7 @@ func (f TimeFormatter) Format(t, relativeTo time.Time) string {
 
 	var text string
 	switch {
-	case f.CollapseMinute && d < time.Minute:
+	case !f.IncludeSeconds && d < time.Minute:
 		if future {
 			return "in less than a minute"
 		}

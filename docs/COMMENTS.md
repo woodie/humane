@@ -43,26 +43,31 @@ no "about" prefix on the hour bucket -- Swift's RelativeDateTimeFormatter
 has no such prefix either, and Go's justincampbell/timeago (which does
 add one) is exactly what this package replaces.
 
-The zero value has CollapseMinute set to false (second-level granularity
-for anything under a minute); use NewTimeFormatter for the collapsed
-default described below. Go structs can't default a bool field to true
-from a bare literal, so the constructor is the recommended way to get it
--- TimeFormatter{CollapseMinute: true} works identically if you'd rather
-not use it.
+Renamed CollapseMinute to IncludeSeconds in v0.3.0 (see
+docs/releases/v0.3.0.md) -- an exact polarity inversion, which happens to
+retire the zero-value footgun this section used to warn about: the zero
+value now has IncludeSeconds set to false, and false is the collapsed
+(recommended) behavior under the new name, so TimeFormatter{} and
+NewTimeFormatter() are now identical. Under the old name, the zero value
+(CollapseMinute: false) was the surprising second-level-granularity case;
+that asymmetry is gone.
 
-### `TimeFormatter.CollapseMinute`
-Renders any duration under 60 seconds as "less than a minute ago" /
-"in less than a minute" instead of counting seconds. Rails'
-distance_of_time_in_words, Go's justincampbell/timeago, and zouk's own
-RelativeDateTimeFormatter wrapper all do this in practice -- Swift's
-formatter has no such bucket natively, so there's no "pure" behavior
-being overridden here, just a convenience every real reference already
-reaches for. The future phrasing follows the same asymmetric "in X"
-pattern as the counted buckets below, not a symmetric "X from now".
+### `TimeFormatter.IncludeSeconds`
+When false (the zero value and the default), renders any duration under
+60 seconds as "less than a minute ago" / "in less than a minute" instead
+of counting seconds. Rails' distance_of_time_in_words, Go's
+justincampbell/timeago, and zouk's own RelativeDateTimeFormatter wrapper
+all do this in practice -- Swift's formatter has no such bucket natively,
+so there's no "pure" behavior being overridden here, just a convenience
+every real reference already reaches for. The future phrasing follows
+the same asymmetric "in X" pattern as the counted buckets below, not a
+symmetric "X from now". Named and defaulted after ActionView's own
+include_seconds, which defaults the same way.
 
 ### `NewTimeFormatter`
-Returns a TimeFormatter with CollapseMinute enabled, the recommended
-default.
+Returns a TimeFormatter with the recommended default -- kept for API
+stability and parity with the other two languages' constructors, even
+though it's now equivalent to TimeFormatter{} (see above).
 
 ### `TimeFormatter.Format`
 Returns t relative to relativeTo as a human-readable string.

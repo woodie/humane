@@ -70,20 +70,26 @@ is the actual design lineage here. The Ruby sibling is `humane-ruby` rather than
   pre-integration, adds one; Swift's formatter doesn't either). `DateTimeStyle`/
   `.named` (`"yesterday"`, calendar-boundary-aware) isn't implemented -- genuine
   complexity, not trivial, and nothing downstream needs it yet.
-- **`CollapseMinute`** (bool, default-intended `true`): renders anything under
-  60 seconds as `"less than a minute ago"`/`"in less than a minute"`. Doesn't
-  exist in `RelativeDateTimeFormatter` at all -- zouk's own `ScanEntry.timeAgo`
-  bolts a manual `< 30`-second clamp on top of the formatter for exactly this
-  reason. Every real reference (Rails, Go's `timeago`, zouk's workaround) does
-  this in practice, so there's no "pure Swift" behavior being overridden; the
-  future-side wording follows the same asymmetric `"in X"` pattern as the
-  counted buckets.
-- **Go's zero-value gotcha**: `TimeFormatter{}`'s zero value has
-  `CollapseMinute: false` (Go can't default a bare `bool` field to `true` from a
-  struct literal) -- second-level granularity, not the collapsed default.
-  `NewTimeFormatter()` returns the intended default (`CollapseMinute: true`).
-  Flagged explicitly in the README and the struct doc comment so it doesn't read
-  as a bug later.
+- **`IncludeSeconds`** (bool, zero-value/default-intended `false`; renamed from
+  `CollapseMinute` in `v0.3.0`, see `docs/releases/v0.3.0.md`): when `false`,
+  renders anything under 60 seconds as `"less than a minute ago"`/`"in less
+  than a minute"`. This collapsing doesn't exist in `RelativeDateTimeFormatter`
+  at all -- zouk's own `ScanEntry.timeAgo` bolts a manual `< 30`-second clamp on
+  top of the formatter for exactly this reason. Every real reference (Rails,
+  Go's `timeago`, zouk's workaround) does this in practice, so there's no "pure
+  Swift" behavior being overridden; the future-side wording follows the same
+  asymmetric `"in X"` pattern as the counted buckets. Named and defaulted after
+  ActionView's own `include_seconds`, which defaults the same way independently
+  -- `humane-ruby` picked up the identical rename.
+- **Go's zero-value gotcha -- resolved by the rename above**: `TimeFormatter{}`'s
+  zero value used to have `CollapseMinute: false` (Go can't default a bare
+  `bool` field to `true` from a struct literal) -- second-level granularity,
+  the surprising case, not `NewTimeFormatter()`'s collapsed default. The
+  `IncludeSeconds` rename inverted the polarity, so the zero value (`false`)
+  *is* the recommended default now: `TimeFormatter{}` and `NewTimeFormatter()`
+  are identical as of `v0.3.0`, and a test locks that in. `NewTimeFormatter()`
+  is kept for API stability and parity with the other languages' constructors,
+  not because the footgun still exists.
 
 ## Sandbox limitation
 
@@ -114,12 +120,34 @@ output; `lambada` and `scandalous` (and their test suites, and zouk's own
 is tagged and published, since they're currently locked to the old
 `"X from now"` wording.
 
+`v0.3.0`: `TimeFormatter.CollapseMinute` (recommended `true` via
+`NewTimeFormatter()`) renamed to `IncludeSeconds` (zero value `false`) -- an
+exact polarity inversion, so the recommended default behavior is unchanged.
+As a side effect, this retires the long-standing Go zero-value gotcha:
+`TimeFormatter{}` and `NewTimeFormatter()` are now identical, since
+`IncludeSeconds`' zero value is itself the recommended default -- see
+"Design decisions" above and `docs/releases/v0.3.0.md`. `humane-ruby` picked
+up the identical rename in its own `v0.3.0` (already committed, not yet
+tagged). Not yet confirmed via `go test ./...` -- no Go toolchain in this
+sandbox, made by inspection only; needs a real run on woodie's Mac before
+tagging.
+
 ## Next up
 
-Nothing outstanding on `SizeFormatter`/`TimeFormatter` themselves. If
-scope ever needs to grow: `SizeFormatter` has no `AllowedUnits`/
-`CountStyle` (Finder's style is the only one anything downstream needs
-today), and `TimeFormatter` has no `.named` style (`"yesterday"`,
-calendar-boundary-aware) -- both left out deliberately per "Design
-decisions" above, not gaps to fill without a real need. Outstanding:
-propagate the `v0.2.0` wording change into `lambada` and `scandalous`.
+1. Confirm `v0.3.0` via `go test ./...` on real hardware, then tag and push.
+2. Propagate both the `v0.2.0` wording change and `v0.3.0` rename into
+   `lambada` and `scandalous`.
+3. Decide whether `humane-swift`'s `approximate` option (ActionView-inspired
+   "about"/"in about" prefixing on hour-plus buckets) gets backported here
+   too -- see `humane-swift/docs/COWORK.md` "Next up".
+4. `SizeFormatter` has no `AllowedUnits`/`CountStyle` (Finder's style is the
+   only one anything downstream needs today), and `TimeFormatter` has no
+   `.named` style (`"yesterday"`, calendar-boundary-aware) -- both left out
+   deliberately per "Design decisions" above, not gaps to fill without a
+   real need.
+5. `humane-swift`'s real-hardware testing found `ByteCountFormatter`'s actual
+   output diverges from this package's hand-rolled 2-significant-digit math
+   in a few cases (zero bytes, byte-scale labels, some GB-scale precision) --
+   see `humane-swift/docs/COWORK.md` "Current state" for specifics. Worth
+   deciding whether to correct `SizeFormatter` toward exact parity or
+   document the gap as accepted.
