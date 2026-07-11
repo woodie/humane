@@ -46,8 +46,11 @@ go get github.com/woodie/humane
 
 ## Beyond Foundation's defaults
 
-Two options on `TimeFormatter`, both off by default so it matches
-`RelativeDateTimeFormatter` exactly out of the box:
+Foundation is the baseline every default matches exactly, in all three
+languages -- these two options on `TimeFormatter` are how you layer
+ActionView's wording on top of it, not a replacement for it. Both off by
+default, so `TimeFormatter{}` and calling `RelativeDateTimeFormatter`
+directly always agree:
 
 - `IncludeSeconds` (default `false`): under 30 seconds, collapses to "less than a
   minute ago"/"in less than a minute" instead of an exact second count. Named

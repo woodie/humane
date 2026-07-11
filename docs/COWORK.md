@@ -221,3 +221,11 @@ is affected. See docs/COMMENTS.md. `humane-swift` picked up the same session:
 `for:` spelling. `humane-ruby` needed no change -- `at:` was already its only
 option. Not yet version-bumped/tagged; this is a same-session, cross-repo
 naming pass, not tied to a behavior change.
+
+The naming pass above, keeping `Format` over `String`, and `IncludeSeconds`/
+`Approximate` defaulting `false` are all the same underlying call: Foundation
+is the baseline every default matches exactly in all three languages;
+ActionView's vocabulary (`IncludeSeconds`, `Approximate`, and now `at`, the
+one parameter name every language can share) is a layer on top of that
+baseline, opt-in, never a replacement for it. Made explicit in the README's
+"Beyond Foundation's defaults" section this session.
