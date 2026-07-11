@@ -19,7 +19,7 @@ import "github.com/woodie/humane"
 humane.SizeFormatter{}.Format(225935) // "226 KB"
 
 timeFormatter := humane.NewTimeFormatter()
-timeFormatter.Format(time.Now().Add(-3*time.Minute), time.Now()) // "3 minutes ago"
+timeFormatter.Format(time.Now().Add(-180*time.Second), time.Now()) // "3 minutes ago"
 ```
 
 Corresponding functions in Swift will have consistent output.
