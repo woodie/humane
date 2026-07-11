@@ -191,41 +191,84 @@ above and remains open: it quotes ActionView's full table, including the
 implements. No further work is scheduled against it beyond what `v0.5.0`
 already ported -- see "Next up" below.
 
+## `v0.9.0`: a full API rethink, informed by three real consumers
+
+Through `v0.5.0` this package was built as a Go port of `ByteCountFormatter`/
+`RelativeDateTimeFormatter` -- configurable formatter types mirroring
+Foundation's own API shape. With three real consumers now shipped
+(`lambada`, `scandalous`, `zouk`) and this package the sole user of its own
+API (woodie), the goal shifted: instead of *looking like* Foundation, feel
+as simple to drop into a Go or Ruby HTML template as ActionView's own
+helpers do, while still behaving consistently across all three languages.
+That's a different design bar than "port Foundation faithfully," and this
+release rebuilds the public API around it rather than iterating on the old
+shape further. Breaking changes throughout -- acceptable since nothing
+outside this session's own `lambada`/`scandalous`/`zouk` follow-up depends
+on the old API yet.
+
+**`SizeFormatter{}.Format(...)`/`NewTimeFormatter()` -> `HumanSize(...)`/
+`TimeAgo(...)`, package-level functions, no instantiation.** Once
+configuration moved to a per-call options argument (below), a formatter
+struct held no state between calls -- instantiating one first was ceremony
+left over from mirroring Foundation, not something this design still needs.
+`humane-ruby` and `humane-swift` picked up the equivalent change in the
+same session (class methods, static methods respectively) -- each language
+uses its own idiomatic casing for the shared concept (`HumanSize`/`TimeAgo`
+here, `human_size`/`time_ago` in Ruby, `humanSize`/`timeAgo` in Swift)
+rather than one literal spelling forced across all three. See
+`docs/COMMENTS.md`.
+
+**`HumanSize`'s rounding corrected toward 3 significant figures.** See
+`docs/COMMENTS.md` for the full derivation -- bakes in `humane-swift`'s
+real-hardware findings (`"Zero KB"` for zero, spelled-out `"bytes"` below
+1000) plus a rounding-rule change (3 significant figures, trailing zeros
+trimmed) that reproduces every known fixture, old and new, with one rule.
+Resolves item 2 from the old "Next up" list below.
+
+**`TimeAgo`'s `Approximate` default flips `false` -> `true`.** Matches
+ActionView's own `distance_of_time_in_words` (which has no toggle for this
+at all -- always on past the hour boundary), and, checked against real
+code, matches what every current consumer already passes explicitly
+(`lambada`'s `main.go`, `scandalous`'s `web.rb`, `zouk`'s `ScanEntry.swift`
+all set it `true` under the old API). Zero behavior change for any shipped
+consumer; removes required boilerplate at every call site instead. Needed
+a new mechanism to avoid a **second Go zero-value gotcha**: `TimeOptions`
+replaces the old `TimeFormatter` struct, and `Approximate` is a `*bool`
+rather than a `bool` specifically so `TimeOptions{}`'s zero value still
+means "use the default (`true`)" instead of silently meaning `false` the
+moment a caller writes an explicit `TimeOptions{IncludeSeconds: true}` --
+see `docs/COMMENTS.md` for why this is the same bug class `IncludeSeconds`
+itself used to have under its old name, `CollapseMinute`.
+
+**`TimeAgo` takes `at *time.Time` and a `WhenNil` option.** Motivated by
+`zouk`'s `ScanEntry.timeAgo(relativeTo:)`, which guarded a possibly-missing
+timestamp itself and handed the caller a `String?` needing its own `??`
+fallback one layer up -- two guard points for one string. `TimeAgo` now
+takes the optional directly; `TimeOptions.WhenNil` supplies the fallback
+text in the same call, collapsing both layers into one. Added to all three
+languages for shape parity even though no current Go consumer has a
+missing-timestamp case (`lambada`'s timestamps always come from a real
+file's mtime) -- `*time.Time` is what makes "no value" expressible in Go at
+all, the equivalent of Ruby's/Swift's native optionals.
+
+Not yet run for real -- no Go toolchain in this sandbox, written by
+inspection per the existing sandbox limitation above. Needs a real
+`go vet ./...`/`ginkgo-fd -r` pass on woodie's Mac, same as every prior
+change here.
+
 ## Next up
 
-1. `SizeFormatter` has no `AllowedUnits`/`CountStyle` (Finder's style is the
-   only one anything downstream needs today), and `TimeFormatter` has no
+1. `HumanSize`'s 3-significant-figure rounding rule reproduces every known
+   fixture (including both cases previously cross-checked against real
+   hardware) but is still an inference from a small fixture set -- worth a
+   real `ByteCountFormatter` comparison across a wider range of magnitudes
+   before treating it as confirmed the way the two original fixtures were.
+2. `HumanSize` has no alternate unit/style options, and `TimeAgo` has no
    `.named` style (`"yesterday"`, calendar-boundary-aware) -- both left out
-   deliberately per "Design decisions" above, not gaps to fill without a
-   real need.
-2. `humane-swift`'s real-hardware testing found `ByteCountFormatter`'s actual
-   output diverges from this package's hand-rolled 2-significant-digit math
-   in a few cases (zero bytes, byte-scale labels, some GB-scale precision) --
-   see `humane-swift/docs/COWORK.md` "Current state" for specifics. Worth
-   deciding whether to correct `SizeFormatter` toward exact parity or
-   document the gap as accepted.
+   deliberately, not gaps to fill without a real need.
 3. `humane-ruby` issue #1 quotes ActionView's full `distance_of_time_in_words`
-   table; `v0.5.0` ported it only through the "1 day" row. The 2..29-day and
-   month/year buckets past that are out of scope by design (see `Format`'s
-   README "Scope" note) -- not a gap to fill without a real downstream need,
-   same as items 1 and 2 above.
-
-## API naming pass (unreleased)
-
-`TimeFormatter.Format`'s first parameter renamed `t` -> `at`, matching the one
-parameter name every language in the family can actually use (`humane-ruby`
-can't call it `for` -- reserved word, syntax error). Go has no argument
-labels, so this is cosmetic/doc-only; no call site (including `lambada`'s)
-is affected. See docs/COMMENTS.md. `humane-swift` picked up the same session:
-`string(at:relativeTo:)` added as an additive alias alongside its primary
-`for:` spelling. `humane-ruby` needed no change -- `at:` was already its only
-option. Not yet version-bumped/tagged; this is a same-session, cross-repo
-naming pass, not tied to a behavior change.
-
-The naming pass above, keeping `Format` over `String`, and `IncludeSeconds`/
-`Approximate` defaulting `false` are all the same underlying call: Foundation
-is the baseline every default matches exactly in all three languages;
-ActionView's vocabulary (`IncludeSeconds`, `Approximate`, and now `at`, the
-one parameter name every language can share) is a layer on top of that
-baseline, opt-in, never a replacement for it. Made explicit in the README's
-"Beyond Foundation's defaults" section this session.
+   table; ported only through the "1 day" row. The 2..29-day and month/year
+   buckets past that are out of scope by design (see README "Scope") -- not
+   a gap to fill without a real downstream need.
+4. `lambada`, `scandalous`, and `zouk` all need a follow-up pass to adopt
+   this API -- see each project's own `docs/COWORK.md` once that happens.

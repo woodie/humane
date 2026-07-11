@@ -5,35 +5,52 @@ import (
 	"time"
 )
 
-// TimeFormatter formats one time relative to another the way Finder-adjacent tools do.
-type TimeFormatter struct {
-	// IncludeSeconds shows exact seconds under a minute instead of collapsing to "less than a minute ago/in less than a minute". Zero value (false) matches ActionView's include_seconds default.
+// TimeOptions configures TimeAgo. Omit entirely (or pass zero options) for
+// the recommended defaults, which match ActionView's own: Approximate true,
+// IncludeSeconds false. See docs/COMMENTS.md for why Approximate is a *bool
+// rather than a bool.
+type TimeOptions struct {
 	IncludeSeconds bool
-	// Approximate prefixes "about"/"in about" on the hour-scale buckets (1 hour, and 2..24 hours), matching ActionView's distance_of_time_in_words wording for those buckets. Zero value (false) matches Foundation's raw output. See docs/COMMENTS.md and humane-ruby issue #1 for the full bucket table this ports.
-	Approximate bool
+	Approximate    *bool
+	WhenNil        string
 }
 
-// NewTimeFormatter returns a TimeFormatter with the recommended default -- now identical to the zero value, since IncludeSeconds' zero value (false) already is that default.
-func NewTimeFormatter() TimeFormatter {
-	return TimeFormatter{}
-}
+// Bool returns a pointer to b, for use with TimeOptions.Approximate.
+func Bool(b bool) *bool { return &b }
 
-// Format returns at relative to relativeTo as a human-readable string.
-func (f TimeFormatter) Format(at, relativeTo time.Time) string {
-	d := relativeTo.Sub(at)
+// TimeAgo formats at relative to relativeTo as a human-readable string,
+// worded "X ago"/"in X" -- direction-aware, so the caller never has to know
+// ahead of time whether at is in the past or future. If at is nil, returns
+// opts.WhenNil without formatting; see docs/COMMENTS.md.
+func TimeAgo(at *time.Time, relativeTo time.Time, opts ...TimeOptions) string {
+	o := TimeOptions{}
+	if len(opts) > 0 {
+		o = opts[0]
+	}
+
+	if at == nil {
+		return o.WhenNil
+	}
+
+	approximate := true
+	if o.Approximate != nil {
+		approximate = *o.Approximate
+	}
+
+	d := relativeTo.Sub(*at)
 	future := d < 0
 	if future {
 		d = -d
 	}
 
-	if !f.IncludeSeconds && d < 30*time.Second {
+	if !o.IncludeSeconds && d < 30*time.Second {
 		if future {
 			return "in less than a minute"
 		}
 		return "less than a minute ago"
 	}
 
-	if f.IncludeSeconds && d < time.Minute {
+	if o.IncludeSeconds && d < time.Minute {
 		return wrap(pluralize(int(d.Seconds()), "second"), future)
 	}
 
@@ -59,7 +76,7 @@ func (f TimeFormatter) Format(at, relativeTo time.Time) string {
 		text = pluralize(int(float64(distanceInMinutes)/1440.0+0.5), "day")
 	}
 
-	if f.Approximate && approximable {
+	if approximate && approximable {
 		text = "about " + text
 	}
 

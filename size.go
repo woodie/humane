@@ -4,26 +4,51 @@ package humane
 import (
 	"fmt"
 	"math"
+	"strconv"
+	"strings"
 )
 
-// sizeUnits are Finder's capitalized, 1000-based unit labels.
-var sizeUnits = []string{"B", "KB", "MB", "GB", "TB", "PB", "EB"}
+// sizeUnits are Finder's capitalized, 1000-based unit labels above byte scale.
+var sizeUnits = []string{"KB", "MB", "GB", "TB", "PB", "EB"}
 
-// SizeFormatter formats byte counts the way Finder does; the zero value is ready to use.
-type SizeFormatter struct{}
-
-// Format returns bytes as a Finder-style human-readable string.
-func (f SizeFormatter) Format(bytes int64) string {
+// HumanSize formats a byte count the way Finder does. See docs/COMMENTS.md
+// for the 3-significant-figure rounding rule and the corrections (zero
+// bytes, byte-scale wording) this bakes in from real ByteCountFormatter
+// output.
+func HumanSize(bytes int64) string {
+	if bytes == 0 {
+		return "Zero KB"
+	}
 	if bytes < 1000 {
-		return fmt.Sprintf("%d B", bytes)
+		if bytes == 1 {
+			return "1 byte"
+		}
+		return fmt.Sprintf("%d bytes", bytes)
 	}
+
 	exp := int(math.Log(float64(bytes)) / math.Log(1000))
-	if exp >= len(sizeUnits) {
-		exp = len(sizeUnits) - 1
+	if exp > len(sizeUnits) {
+		exp = len(sizeUnits)
 	}
-	rounded := math.Round(float64(bytes)/math.Pow(1000, float64(exp))*10) / 10
-	if rounded < 10 {
-		return fmt.Sprintf("%.1f %s", rounded, sizeUnits[exp])
+	value := float64(bytes) / math.Pow(1000, float64(exp))
+
+	return fmt.Sprintf("%s %s", formatSignificant(value, 3), sizeUnits[exp-1])
+}
+
+// formatSignificant rounds value to sigFigs significant figures and trims
+// any trailing fractional zeros (and the decimal point itself, if nothing
+// remains after it) -- see docs/COMMENTS.md.
+func formatSignificant(value float64, sigFigs int) string {
+	magnitude := int(math.Floor(math.Log10(value))) + 1
+	decimals := sigFigs - magnitude
+	if decimals < 0 {
+		decimals = 0
 	}
-	return fmt.Sprintf("%.0f %s", rounded, sizeUnits[exp])
+
+	s := strconv.FormatFloat(value, 'f', decimals, 64)
+	if strings.Contains(s, ".") {
+		s = strings.TrimRight(s, "0")
+		s = strings.TrimRight(s, ".")
+	}
+	return s
 }

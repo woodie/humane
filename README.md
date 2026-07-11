@@ -5,38 +5,21 @@
 [![Release](https://img.shields.io/github/v/release/woodie/humane.svg)](https://github.com/woodie/humane/releases/latest)
 [![License](https://img.shields.io/github/license/woodie/humane.svg)](LICENSE)
 
-Getting human-readable file sizes with 1000-based math
-(as the Mac Finder displays) and relative times worded the way Swift's
-`RelativeDateTimeFormatter` does turned out to be a real challenge to get
-both right and simple. The `humane` library exists so a Go application can share
-consistent size and time formatting with a Swift application, instead of
-reaching for a library whose output doesn't match Swift's or that's
-complicated to drop in.
+Human-readable file sizes (1000-based math, capitalized labels, the way Mac
+Finder displays them) and relative times (`"3 minutes ago"`, `"in 3 hours"`)
+for Go and Ruby HTML templates -- as simple to drop in as ActionView's own
+helpers, with output that's consistent with
+[`humane-ruby`](https://github.com/woodie/humane-ruby) and
+[`humane-swift`](https://github.com/woodie/humane-swift).
 
 ```go
 import "github.com/woodie/humane"
 
-humane.SizeFormatter{}.Format(225935) // "226 KB"
+humane.HumanSize(225935) // "226 KB"
 
-timeFormatter := humane.NewTimeFormatter()
-timeFormatter.Format(time.Now().Add(-180*time.Second), time.Now()) // "3 minutes ago"
+now := time.Now()
+humane.TimeAgo(&now, now) // "less than a minute ago"
 ```
-
-Corresponding functions in Swift will have consistent output.
-
-```swift
-import Foundation
-
-ByteCountFormatter.string(fromByteCount: Int64(225935), countStyle: .file) // "226 KB"
-
-let formatter = RelativeDateTimeFormatter(); formatter.unitsStyle = .full
-formatter.localizedString(for: time, relativeTo: now) // "3 minutes ago"
-```
-
-If you're writing Swift directly rather than calling Foundation by hand,
-[`humane-swift`](https://github.com/woodie/humane-swift) wraps these same two
-formatters with the identical API shape -- including the
-`includeSeconds`/`approximate` options below.
 
 ## Install
 
@@ -44,32 +27,64 @@ formatters with the identical API shape -- including the
 go get github.com/woodie/humane
 ```
 
-## Beyond Foundation's defaults
+## TimeAgo options
 
-Foundation is the baseline every default matches exactly, in all three
-languages -- these two options on `TimeFormatter` are how you layer
-ActionView's wording on top of it, not a replacement for it. Both off by
-default, so `TimeFormatter{}` and calling `RelativeDateTimeFormatter`
-directly always agree:
-
-- `IncludeSeconds` (default `false`): under 30 seconds, collapses to "less than a
-  minute ago"/"in less than a minute" instead of an exact second count. Named
-  after ActionView's `include_seconds`, which defaults the same way.
-- `Approximate` (default `false`): prefixes "about"/"in about" on the hour-scale
-  buckets (1 hour, and 2..24 hours), the way ActionView's `distance_of_time_in_words`
-  does for those same buckets -- for a render that can't refresh itself and
-  shouldn't overstate its own precision. Matches ActionView's own table exactly
-  (down to its 44:30/89:30 rounding cutoffs), through the "1 day" bucket;
-  week/month/year buckets are out of scope. See
-  [humane-ruby issue #1](https://github.com/woodie/humane-ruby/issues/1).
+`TimeAgo`'s recommended defaults already match ActionView's own
+`distance_of_time_in_words` defaults -- pass no options at all and you get
+them for free:
 
 ```go
-humane.TimeFormatter{Approximate: true}.Format(t.Add(-15*time.Hour), t) // "about 15 hours ago"
+humane.TimeAgo(at, relativeTo) // Approximate: true, IncludeSeconds: false
 ```
+
+- **`Approximate`** (`*bool`, default `true`): prefixes `"about"`/`"in about"`
+  on the hour-scale buckets (1 hour, and 2..24 hours), matching ActionView's
+  `distance_of_time_in_words` wording for those buckets exactly (down to its
+  44:30/89:30 rounding cutoffs), through the "1 day" bucket. This is a
+  `*bool`, not a `bool` -- see "Why `Approximate` is a pointer" below.
+- **`IncludeSeconds`** (`bool`, default `false`): under 30 seconds, collapses
+  to `"less than a minute ago"`/`"in less than a minute"` instead of an exact
+  second count. Matches ActionView's `include_seconds` default.
+- **`WhenNil`** (`string`, default `""`): if `at` is `nil`, `TimeAgo` returns
+  this string without formatting -- for a scan, download, or other record
+  that doesn't have a timestamp yet.
+
+```go
+humane.TimeAgo(at, relativeTo, humane.TimeOptions{Approximate: humane.Bool(false)})
+// "15 hours ago", not "about 15 hours ago"
+
+humane.TimeAgo(nil, relativeTo, humane.TimeOptions{WhenNil: "an unknown time"})
+// "an unknown time"
+```
+
+### Why `Approximate` is a pointer
+
+`TimeOptions{}`'s zero value needs to mean "use the recommended defaults,"
+and Go can't default a bare `bool` field to `true` from a struct literal --
+the zero value of `bool` is always `false`. (This is the same footgun that
+`IncludeSeconds` used to have under its old name, `CollapseMinute`; see
+`docs/COMMENTS.md`.) Rather than silently defaulting `Approximate` to
+`false` whenever you write an explicit `TimeOptions{...}` for some other
+field, `Approximate` is a `*bool`: `nil` means "use the default (`true`)",
+and `humane.Bool(false)` opts out.
 
 ## Scope
 
-Finder's `.file` byte-count style, and a numeric (non-calendar-aware)
-relative time style -- that's the whole surface area today.
-`AllowedUnits`/alternate `CountStyle`s and `.named` style (`"yesterday"`,
+Finder's byte-count style, and a numeric (non-calendar-aware) relative time
+style through the "1 day" bucket -- that's the whole surface area today.
+Alternate size units/styles and a `.named` style (`"yesterday"`,
 calendar-boundary-aware) aren't implemented -- contributions welcome.
+
+## Development
+
+```
+golangci-lint run
+ginkgo-fd -r
+```
+
+or, if you don't have `ginkgo-fd` installed:
+
+```
+go vet ./...
+go test ./...
+```
