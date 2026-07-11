@@ -209,3 +209,15 @@ already ported -- see "Next up" below.
    month/year buckets past that are out of scope by design (see `Format`'s
    README "Scope" note) -- not a gap to fill without a real downstream need,
    same as items 1 and 2 above.
+
+## API naming pass (unreleased)
+
+`TimeFormatter.Format`'s first parameter renamed `t` -> `at`, matching the one
+parameter name every language in the family can actually use (`humane-ruby`
+can't call it `for` -- reserved word, syntax error). Go has no argument
+labels, so this is cosmetic/doc-only; no call site (including `lambada`'s)
+is affected. See docs/COMMENTS.md. `humane-swift` picked up the same session:
+`string(at:relativeTo:)` added as an additive alias alongside its primary
+`for:` spelling. `humane-ruby` needed no change -- `at:` was already its only
+option. Not yet version-bumped/tagged; this is a same-session, cross-repo
+naming pass, not tied to a behavior change.

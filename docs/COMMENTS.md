@@ -95,6 +95,15 @@ post-process RelativeDateTimeFormatter's already-complete phrase, but
 that formatter doesn't hit these specific cutoffs on its own).
 
 ### `TimeFormatter.Format`
+Parameter renamed from `t` to `at`: `at` is the one parameter name
+`humane-ruby` can actually use (`for` is a reserved word in Ruby, so
+`def string(for:, ...)` is a syntax error), which makes it the canonical
+name across the family rather than a stylistic pick. `humane-swift` added
+`string(at:relativeTo:)` as an alias alongside its primary `for:` spelling
+for the same reason. Go has no argument labels at all -- callers never see
+this name -- so the rename here is cosmetic, doc/signature-only, and
+doesn't touch call sites like `lambada`'s.
+
 Buckets are chosen from distanceInMinutes (seconds/60, rounded once via
 `int(d.Minutes()+0.5)`), not by re-dividing raw seconds independently
 per unit. The old per-unit approach let rounding carry across a bucket

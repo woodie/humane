@@ -18,9 +18,9 @@ func NewTimeFormatter() TimeFormatter {
 	return TimeFormatter{}
 }
 
-// Format returns t relative to relativeTo as a human-readable string.
-func (f TimeFormatter) Format(t, relativeTo time.Time) string {
-	d := relativeTo.Sub(t)
+// Format returns at relative to relativeTo as a human-readable string.
+func (f TimeFormatter) Format(at, relativeTo time.Time) string {
+	d := relativeTo.Sub(at)
 	future := d < 0
 	if future {
 		d = -d
