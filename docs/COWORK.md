@@ -171,7 +171,7 @@ Foundation's defaults" section documenting `IncludeSeconds`/`Approximate`
 that this README had never had (unlike `humane-ruby`'s and
 `humane-swift`'s READMEs, which already did).
 
-`v0.5.0` (unreleased): `Format` reworked to match the ActionView
+`v0.5.0`: `Format` reworked to match the ActionView
 `distance_of_time_in_words` bucket table quoted in `humane-ruby` issue #1
 exactly, through the "1 day" row -- see `humane-ruby`'s own `docs/COWORK.md`
 for the full writeup and rationale, ported here identically. `IncludeSeconds:
@@ -181,7 +181,15 @@ off `distanceInMinutes` rather than raw seconds re-divided per unit (fixes a
 latent bug where `59:59:59` rounded to "60 minutes ago"). New boundary-pair
 specs added covering all six table cutoffs. Confirmed for real on woodie's
 Mac: `go test ./...` (`ok`) and `ginkgo-fd` -- 36/36 passing, alongside
-`humane-ruby`'s identical change (35/35) in the same session.
+`humane-ruby`'s identical change (35/35) in the same session. Tagged and
+released: https://github.com/woodie/humane/releases/tag/v0.5.0.
+
+`humane-ruby` issue #1 (https://github.com/woodie/humane-ruby/issues/1,
+"Provide ActionView compatibility mode") is the source of the bucket table
+above and remains open: it quotes ActionView's full table, including the
+2..29-day and month/year buckets past the "1 day" row this package
+implements. No further work is scheduled against it beyond what `v0.5.0`
+already ported -- see "Next up" below.
 
 ## Next up
 
@@ -196,3 +204,8 @@ Mac: `go test ./...` (`ok`) and `ginkgo-fd` -- 36/36 passing, alongside
    see `humane-swift/docs/COWORK.md` "Current state" for specifics. Worth
    deciding whether to correct `SizeFormatter` toward exact parity or
    document the gap as accepted.
+3. `humane-ruby` issue #1 quotes ActionView's full `distance_of_time_in_words`
+   table; `v0.5.0` ported it only through the "1 day" row. The 2..29-day and
+   month/year buckets past that are out of scope by design (see `Format`'s
+   README "Scope" note) -- not a gap to fill without a real downstream need,
+   same as items 1 and 2 above.
