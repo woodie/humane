@@ -251,10 +251,16 @@ missing-timestamp case (`lambada`'s timestamps always come from a real
 file's mtime) -- `*time.Time` is what makes "no value" expressible in Go at
 all, the equivalent of Ruby's/Swift's native optionals.
 
-Not yet run for real -- no Go toolchain in this sandbox, written by
-inspection per the existing sandbox limitation above. Needs a real
-`go vet ./...`/`ginkgo-fd -r` pass on woodie's Mac, same as every prior
-change here.
+Written by inspection per the existing sandbox limitation above (no Go
+toolchain here) -- confirmed via a green CI run on GitHub Actions rather
+than a locally-pasted `go vet`/`ginkgo-fd -r`, unlike every prior change
+in this file. Tagged, pushed, and released:
+https://github.com/woodie/humane/releases/tag/v0.9.0.
+
+All three real consumers have since adopted it: `lambada` `2.7.0`
+(deployed to the Pi, confirmed live), `scandalous` `2.7.0`, and `zouk`
+`v1.11.0` (signed, notarized, and the `homebrew-zouk` cask auto-bumped via
+`repository_dispatch`) -- see each repo's own `docs/COWORK.md`.
 
 ## Next up
 
