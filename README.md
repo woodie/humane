@@ -17,11 +17,9 @@ import "github.com/woodie/humane"
 
 humane.HumanSize(225935) // "226 KB"
 
-now := time.Now()
+now := time.Now(); mtime := now.Add(-180 * time.Second)
 humane.TimeAgo(&now, now) // "less than a minute ago"
-
-then := now.Add(-180 * time.Second)
-humane.TimeAgo(&then, now) // "3 minutes ago"
+humane.TimeAgo(&mtime, now) // "3 minutes ago"
 ```
 
 ## Install
