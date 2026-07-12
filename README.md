@@ -19,6 +19,9 @@ humane.HumanSize(225935) // "226 KB"
 
 now := time.Now()
 humane.TimeAgo(&now, now) // "less than a minute ago"
+
+then := now.Add(-180 * time.Second)
+humane.TimeAgo(&then, now) // "3 minutes ago"
 ```
 
 ## Install
