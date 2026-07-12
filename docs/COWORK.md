@@ -276,5 +276,7 @@ All three real consumers have since adopted it: `lambada` `2.7.0`
    table; ported only through the "1 day" row. The 2..29-day and month/year
    buckets past that are out of scope by design (see README "Scope") -- not
    a gap to fill without a real downstream need.
-4. `lambada`, `scandalous`, and `zouk` all need a follow-up pass to adopt
-   this API -- see each project's own `docs/COWORK.md` once that happens.
+
+All three real consumers (`lambada`, `scandalous`, `zouk`) have already
+adopted `v0.9.0` -- see "All three real consumers have since adopted it"
+above. Nothing left open on that front.
