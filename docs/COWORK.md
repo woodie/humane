@@ -301,10 +301,15 @@ consumers**, independently, before this rename existed:
   consumer layer (Sinatra's/Rails' own helper mechanism), not inside this
   family of libraries. No mixin/include mechanism added here as a result.
 
-Made by inspection per the sandbox limitation above; not yet confirmed on
-real hardware or tagged/pushed. `lambada`/`zouk`/`scandalous` adoption
-(deleting the hand-rolled wrappers above in favor of the new library
-convenience) is a deliberately separate follow-up, once this is confirmed.
+Made by inspection per the sandbox limitation above; confirmed for real on
+woodie's Mac -- `make test` (`ginkgo-fd -r`, verbose): 39/39 specs passing,
+including the new `TimeAgo` describe block. `make check` (terse):
+`golangci-lint run` 0 issues, `ginkgo -r` 39/39. Not yet tagged/pushed.
+`lambada`/`zouk`/`scandalous` adoption (deleting the hand-rolled wrappers
+above in favor of the new library convenience) is a deliberately separate
+follow-up, once all three sibling repos are confirmed -- see
+`humane-ruby`'s and `humane-swift`'s own `docs/COWORK.md` for their
+confirmation status.
 
 ## Next up
 
