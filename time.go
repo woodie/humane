@@ -5,10 +5,10 @@ import (
 	"time"
 )
 
-// TimeOptions configures TimeAgo. Omit entirely (or pass zero options) for
-// the recommended defaults, which match ActionView's own: Approximate true,
-// IncludeSeconds false. See docs/COMMENTS.md for why Approximate is a *bool
-// rather than a bool.
+// TimeOptions configures DistanceInTime and TimeAgo. Omit entirely (or pass
+// zero options) for the recommended defaults, which match ActionView's own:
+// Approximate true, IncludeSeconds false. See docs/COMMENTS.md for why
+// Approximate is a *bool rather than a bool.
 type TimeOptions struct {
 	IncludeSeconds bool
 	Approximate    *bool
@@ -18,11 +18,14 @@ type TimeOptions struct {
 // Bool returns a pointer to b, for use with TimeOptions.Approximate.
 func Bool(b bool) *bool { return &b }
 
-// TimeAgo formats at relative to relativeTo as a human-readable string,
-// worded "X ago"/"in X" -- direction-aware, so the caller never has to know
-// ahead of time whether at is in the past or future. If at is nil, returns
-// opts.WhenNil without formatting; see docs/COMMENTS.md.
-func TimeAgo(at *time.Time, relativeTo time.Time, opts ...TimeOptions) string {
+// DistanceInTime formats at relative to relativeTo as a human-readable
+// string, worded "X ago"/"in X" -- direction-aware, so the caller never has
+// to know ahead of time whether at is in the past or future. If at is nil,
+// returns opts.WhenNil without formatting; see docs/COMMENTS.md. This is the
+// explicit, fully-testable core, modeled on ActionView's
+// distance_of_time_in_words -- see TimeAgo for the one-argument convenience
+// modeled on time_ago_in_words.
+func DistanceInTime(at *time.Time, relativeTo time.Time, opts ...TimeOptions) string {
 	o := TimeOptions{}
 	if len(opts) > 0 {
 		o = opts[0]
@@ -81,6 +84,15 @@ func TimeAgo(at *time.Time, relativeTo time.Time, opts ...TimeOptions) string {
 	}
 
 	return wrap(text, future)
+}
+
+// TimeAgo formats at relative to the current time -- a convenience for the
+// common "drop into a view" case, modeled on ActionView's time_ago_in_words
+// wrapping distance_of_time_in_words with Time.now. Use DistanceInTime
+// directly when the reference time needs to be explicit (tests, a fixed
+// point other than now).
+func TimeAgo(at *time.Time, opts ...TimeOptions) string {
+	return DistanceInTime(at, time.Now(), opts...)
 }
 
 func wrap(text string, future bool) string {

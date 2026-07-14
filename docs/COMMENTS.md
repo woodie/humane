@@ -10,8 +10,8 @@ have been a doc comment lives here instead.
 
 ### Package `humane`
 Formats file sizes and relative dates the way macOS Finder does, as
-package-level functions (`HumanSize`, `TimeAgo`) rather than configurable
-formatter types. Through `v0.5.0` this package mirrored Foundation's
+package-level functions (`HumanSize`, `DistanceInTime`, `TimeAgo`) rather
+than configurable formatter types. Through `v0.5.0` this package mirrored Foundation's
 formatter-type shape (`SizeFormatter{}.Format(...)`, `NewTimeFormatter()`)
 on purpose, matching `ByteCountFormatter`/`RelativeDateTimeFormatter`'s own
 API surface. `v0.9.0` drops that shape: once configuration moved to a
@@ -79,11 +79,12 @@ floating-point rounding of the logarithm itself).
 ### `TimeOptions` (struct)
 Replaces the `TimeFormatter` struct/`NewTimeFormatter()` constructor pair
 from `v0.5.0` and earlier. Passed as a trailing variadic argument to
-`TimeAgo` specifically so omitting it entirely still gets the recommended
-defaults (`TimeAgo(at, relativeTo)` with no third argument) without the
-zero-value ambiguity a single non-variadic `TimeOptions{}` parameter would
-have -- see `TimeOptions.Approximate` below for why that ambiguity would
-otherwise matter here.
+`DistanceInTime` (and, since `v0.9.3`, `TimeAgo`) specifically so omitting
+it entirely still gets the recommended defaults (`DistanceInTime(at,
+relativeTo)` with no third argument) without the zero-value ambiguity a
+single non-variadic `TimeOptions{}` parameter would have -- see
+`TimeOptions.Approximate` below for why that ambiguity would otherwise
+matter here.
 
 ### `TimeOptions.Approximate`
 A `*bool`, not a `bool`. `v0.9.0` flips the recommended default for
@@ -111,20 +112,21 @@ explicit `false` without a caller declaring their own local variable
 first.
 
 ### `TimeOptions.WhenNil`
-Added in `v0.9.0` alongside `TimeAgo` accepting `at *time.Time` instead of
-`at time.Time`. Motivated by `zouk`'s `ScanEntry.timeAgo(relativeTo:)`,
-which used to guard a possibly-unparsable timestamp itself
-(`guard let downloadedAt else { return nil }`) and hand the caller a
-`String?` that still needed its own `?? "an unknown time"` fallback one
-layer up in `ScanGridView` -- two guard points for one final string.
-`TimeAgo` now takes the optional directly and a caller-supplied fallback
-string, collapsing both guard points into one call. The fallback text
-stays app-specific (an empty default, not a hardcoded "unknown time" or
-similar baked into this package) -- consistent with keeping
-ActionView-flavored vocabulary opt-in and configurable rather than
-assumed, the same principle `Approximate`/`IncludeSeconds` already follow.
+Added in `v0.9.0` alongside `TimeAgo` (renamed `DistanceInTime` in `v0.9.3`)
+accepting `at *time.Time` instead of `at time.Time`. Motivated by `zouk`'s
+`ScanEntry.timeAgo(relativeTo:)`, which used to guard a possibly-unparsable
+timestamp itself (`guard let downloadedAt else { return nil }`) and hand
+the caller a `String?` that still needed its own `?? "an unknown time"`
+fallback one layer up in `ScanGridView` -- two guard points for one final
+string. `DistanceInTime`/`TimeAgo` now take the optional directly and a
+caller-supplied fallback string, collapsing both guard points into one
+call. The fallback text stays app-specific (an empty default, not a
+hardcoded "unknown time" or similar baked into this package) -- consistent
+with keeping ActionView-flavored vocabulary opt-in and configurable rather
+than assumed, the same principle `Approximate`/`IncludeSeconds` already
+follow.
 
-### `TimeAgo`
+### `DistanceInTime` (renamed from `TimeAgo` in `v0.9.3`)
 Formats one time relative to another the way ActionView's
 `distance_of_time_in_words` does for wording, but direction-aware like
 `RelativeDateTimeFormatter` -- `"X ago"` for the past, `"in X"` for the
@@ -145,10 +147,18 @@ switching on *that* is exactly how ActionView's own
 non-obvious cutoffs: the "about 1 hour" bucket starts at 44 minutes 30
 seconds (not 60:00), and "about 2 hours" starts at 89:30, not 90:00.
 
-    TimeAgo(at, at)                              == "less than a minute ago"
-    TimeAgo(at, at.Add(45*time.Second))           == "1 minute ago"
-    TimeAgo(at, at.Add(3*time.Minute))            == "3 minutes ago"
-    TimeAgo(at, at.Add(-3*time.Minute))           == "in 3 minutes"
-    TimeAgo(at, at.Add(15*time.Hour))             == "about 15 hours ago"
-    TimeAgo(at, at.Add(30*time.Hour))             == "1 day ago" // no "about" -- ActionView's table has none on the day bucket
-    TimeAgo(nil, now, TimeOptions{WhenNil: "an unknown time"}) == "an unknown time"
+    DistanceInTime(at, at)                              == "less than a minute ago"
+    DistanceInTime(at, at.Add(45*time.Second))           == "1 minute ago"
+    DistanceInTime(at, at.Add(3*time.Minute))            == "3 minutes ago"
+    DistanceInTime(at, at.Add(-3*time.Minute))           == "in 3 minutes"
+    DistanceInTime(at, at.Add(15*time.Hour))             == "about 15 hours ago"
+    DistanceInTime(at, at.Add(30*time.Hour))             == "1 day ago" // no "about" -- ActionView's table has none on the day bucket
+    DistanceInTime(nil, now, TimeOptions{WhenNil: "an unknown time"}) == "an unknown time"
+
+### `TimeAgo` (new meaning in `v0.9.3`)
+A one-argument convenience over `DistanceInTime`, supplying `time.Now()` as
+`relativeTo` -- see `docs/COWORK.md`'s `v0.9.3` entry for why (the
+ActionView `distance_of_time_in_words`/`time_ago_in_words` naming pair this
+mirrors). Thin passthrough, no bucketing logic of its own; the `TimeAgo`
+`Describe` block in `time_test.go` covers it with three cases rather than
+re-testing everything `DistanceInTime` already does.

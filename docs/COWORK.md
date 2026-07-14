@@ -262,6 +262,50 @@ All three real consumers have since adopted it: `lambada` `2.7.0`
 `v1.11.0` (signed, notarized, and the `homebrew-zouk` cask auto-bumped via
 `repository_dispatch`) -- see each repo's own `docs/COWORK.md`.
 
+## `v0.9.3` (working, not yet finalized): `DistanceInTime`/`TimeAgo` split
+
+Still converging on this one -- tagged as `0.9.3`, not `1.0.0`, on purpose.
+
+**`TimeAgo` (the old two-argument function) is renamed `DistanceInTime`.**
+A new one-argument `TimeAgo(at, opts...)` takes its place, supplying
+`time.Now()` as `relativeTo` internally. Same naming split as ActionView's
+own `distance_of_time_in_words` (explicit two-input core) and
+`time_ago_in_words` (one-input convenience wrapping it with `Time.now`) --
+not a coincidence, this package is explicitly borrowing that naming pair
+rather than inventing its own. `humane-ruby`/`humane-swift` picked up the
+equivalent split in the same session (`distance_in_time`/`time_ago`,
+`distanceInTime`/`timeAgo`) -- see each repo's own `docs/COWORK.md`.
+
+The short names (`TimeAgo`, `HumanSize`) stay reserved for the "format a
+string for a view" contract across all three languages. Anything that
+returns something richer than a string in the future earns a longer,
+explicit name instead of competing for the short one.
+
+**Not invented from scratch -- found already hand-built by all three real
+consumers**, independently, before this rename existed:
+
+- `lambada`'s `listingTemplate` FuncMap wraps `humane.TimeAgo(&t,
+  time.Now())` in a closure just to supply the clock; its own project
+  history (this file's `v0.9.0` entry references `lambada`'s
+  `docs/COWORK.md`) already went through and reverted an explicit-`now`
+  design once for exactly this reason. The new one-argument `TimeAgo` lets
+  the FuncMap point at `humane.TimeAgo` directly, no wrapper needed.
+- `zouk`'s `ScanEntry.timeAgo` (a zero-argument computed property wrapping
+  `Date()`) sits beside `ScanEntry.timeAgo(relativeTo:)` (explicit, for
+  specs) -- the same two-tier split, hand-built in Swift because
+  `humane-swift` didn't offer it.
+- `scandalous` dropped `include ActionView::Helpers::DateHelper`/
+  `NumberHelper` entirely once `humane-ruby` existed, replacing it with its
+  own Sinatra `helpers do` block wrapping `Humane.xxx` for bare-name calls
+  in ERB -- confirming that "bare name in a view" ergonomics belongs at the
+  consumer layer (Sinatra's/Rails' own helper mechanism), not inside this
+  family of libraries. No mixin/include mechanism added here as a result.
+
+Made by inspection per the sandbox limitation above; not yet confirmed on
+real hardware or tagged/pushed. `lambada`/`zouk`/`scandalous` adoption
+(deleting the hand-rolled wrappers above in favor of the new library
+convenience) is a deliberately separate follow-up, once this is confirmed.
+
 ## Next up
 
 1. `HumanSize`'s 3-significant-figure rounding rule reproduces every known
