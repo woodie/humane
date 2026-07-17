@@ -198,19 +198,13 @@ var _ = Describe("DistanceInTime", func() {
 var _ = Describe("TimeAgo", func() {
 	Context("just now", func() {
 		It("displays less than a minute ago", func() {
-			Expect(humane.TimeAgo(ptr(time.Now()))).To(Equal("less than a minute ago"))
+			Expect(humane.TimeAgo(time.Now())).To(Equal("less than a minute ago"))
 		})
 	})
 
 	Context("3 minutes ago", func() {
 		It("forwards to DistanceInTime with time.Now() as relativeTo", func() {
-			Expect(humane.TimeAgo(ptr(time.Now().Add(-3 * time.Minute)))).To(Equal("3 minutes ago"))
-		})
-	})
-
-	Context("still accepts TimeOptions", func() {
-		It("returns WhenNil for a nil at", func() {
-			Expect(humane.TimeAgo(nil, humane.TimeOptions{WhenNil: "an unknown time"})).To(Equal("an unknown time"))
+			Expect(humane.TimeAgo(time.Now().Add(-3 * time.Minute))).To(Equal("3 minutes ago"))
 		})
 	})
 })

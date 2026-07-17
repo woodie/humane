@@ -86,13 +86,10 @@ func DistanceInTime(at *time.Time, relativeTo time.Time, opts ...TimeOptions) st
 	return wrap(text, future)
 }
 
-// TimeAgo formats at relative to the current time -- a convenience for the
-// common "drop into a view" case, modeled on ActionView's time_ago_in_words
-// wrapping distance_of_time_in_words with Time.now. Use DistanceInTime
-// directly when the reference time needs to be explicit (tests, a fixed
-// point other than now).
-func TimeAgo(at *time.Time, opts ...TimeOptions) string {
-	return DistanceInTime(at, time.Now(), opts...)
+// TimeAgo formats at relative to now -- the common "view" case.
+// Use DistanceInTime directly for an explicit reference time or a possibly-nil at.
+func TimeAgo(at time.Time, opts ...TimeOptions) string {
+	return DistanceInTime(&at, time.Now(), opts...)
 }
 
 func wrap(text string, future bool) string {
