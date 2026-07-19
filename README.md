@@ -94,10 +94,11 @@ calendar-boundary-aware) aren't implemented -- contributions welcome.
 
 ```
 golangci-lint run
-ginkgo-fd -r
+go test -v ./... | gorderly -fd
 ```
 
-or, if you don't have `ginkgo-fd` installed:
+or, if you don't have [`gorderly`](https://github.com/woodie/gorderly)
+installed:
 
 ```
 go vet ./...
