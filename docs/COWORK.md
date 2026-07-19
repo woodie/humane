@@ -14,6 +14,38 @@ function (the shape most Go/Ruby humanize libraries actually use).
 algorithm, same wording, separate repo since Go module versioning and RubyGems
 versioning don't share a tag namespace cleanly.
 
+## Writing tests here
+
+Tests use [`sclevine/spec`](https://github.com/sclevine/spec) (replaced
+in `go.mod` with [`github.com/woodie/spec`](https://github.com/woodie/spec))
+for structure and [`github.com/woodie/expect`](https://github.com/woodie/expect)
+for assertions -- the same pairing `lambada`/`gorderly` use. Shape:
+
+```go
+func TestHumanSize(t *testing.T) {
+	spec.RunAliased(t, "HumanSize", func(t *testing.T, describe, context spec.Describe, it spec.S, before, after func(func())) {
+		context("with 0 bytes", func() {
+			it("formats as Zero KB", func() {
+				Expect(t, humane.HumanSize(0)).To(Equal("Zero KB"))
+			})
+		})
+	})
+}
+```
+
+`describe`/`context`/`it` nest like RSpec; `before`/`after` register
+hooks (only name the ones a given test actually uses -- `_` the rest,
+same convention as `lambada-mta`). `expect` is dot-imported so matchers
+read as `Expect(t, got).To(Matcher)`/`.NotTo(Matcher)`. No literal `/` in
+any `describe`/`context`/`it` string -- both `spec`'s flat mode and
+`gorderly`'s tree renderer treat `/` as a real hierarchy separator, so
+one shows up as spurious extra nesting.
+
+Run with `go test -v ./... | gorderly -fd` (or `-fv` for Vitest-style
+output) to see the real nested tree instead of `go test`'s flat
+`--- PASS` lines; plain `go test ./...` still works too. `make
+test`/`make check` wrap these.
+
 ## Why this exists
 
 Extracted out of `lambada` and `scandalous` after a multi-step saga fixing their
@@ -330,55 +362,12 @@ All three real consumers (`lambada`, `scandalous`, `zouk`) have already
 adopted `v0.9.0` -- see "All three real consumers have since adopted it"
 above. Nothing left open on that front.
 
-## Later session: migrated off Ginkgo/Gomega to spec+expect
+## Current test stack
 
-`lambada`/`lambada-mta` had already made this move earlier in the same
-account-wide session (see `lambada`'s own `docs/COWORK.md`); the user
-asked to bring `humane` along too, while explicitly leaving `ginkgo-fd`
-itself untouched (it's a Ginkgo output formatter -- dogfooding real
-Ginkgo output makes sense there in a way it never did for a library like
-this one).
+Tests use `sclevine/spec` (replaced with `github.com/woodie/spec`) +
+`github.com/woodie/expect`, same as `lambada`/`gorderly`. `go test -v
+./... | gorderly -fd`, or `make test`/`make check`. `ginkgo-fd` itself
+stays as a dev dependency for other repos only -- not used here.
 
-Straightforward port, since neither test file used any Ginkgo lifecycle
-hooks (`BeforeEach`/`AfterEach`) -- every `Describe`/`Context` body was
-already just plain Go closures computing local vars (`base :=
-time.Date(...)`, `opts := humane.TimeOptions{...}`) once at tree-build
-time, which is exactly how `spec`'s `describe`/`context` closures behave
-too. `size_test.go` and `time_test.go` became `TestHumanSize`/`TestTime`,
-each wrapping `spec.RunAliased(t, "...", func(t *testing.T, describe,
-context spec.Describe, it spec.S, before, after func(func())) {...})`;
-every `Expect(x).To(Equal(y))` became `Expect(t, x).To(Equal(y))` (dot-
-imported from `github.com/woodie/expect`). `humane_suite_test.go` (just
-Ginkgo's `RegisterFailHandler`/`RunSpecs` bootstrap) was deleted outright
--- `spec` needs no shared suite entry point, unlike Ginkgo, and the
-sandbox was able to `rm` it directly this time (no virtiofs restriction
-hit, unlike some earlier sessions in sibling repos).
-
-`go.mod` dropped `onsi/ginkgo`/`onsi/gomega` and their entire indirect-
-dependency tree (`Masterminds/semver`, `go-logr/logr`,
-`go-task/slim-sprig`, `google/go-cmp`, `google/pprof`, `go.yaml.in/yaml`,
-five `golang.org/x/*` packages -- none of which `spec`/`expect` need, both
-being pure-stdlib) in favor of `sclevine/spec v1.4.0` (replaced with
-`github.com/woodie/spec v0.1.0`, same fork/replace pattern as `lambada`)
-and `woodie/expect v0.1.0`. `go.sum` was deliberately left untouched --
-generating correct hashes needs real module downloads, which this
-sandbox can't do; `go mod tidy` on a real Mac is required before anything
-else here will build.
-
-`Makefile`'s `test`/`check` targets shelled out to `ginkgo-fd`/`ginkgo`
-directly; rewritten to `go test -v ./... | gorderly -fd` and a plain
-`go test ./...` with pass/fail-log suppression, matching `gorderly`'s own
-Makefile shape exactly (silent on success, full log on failure).
-`README.md`'s "Development" section updated the same way.
-
-Made by inspection only, same sandbox limitation as every prior round in
-this file (no Go toolchain here) -- unlike every previous change logged
-above, this one hasn't been confirmed with a real `go mod tidy`/`go
-test`/`make test` run yet. Needs, on the user's Mac:
-
-```
-cd ~/workspace/humane
-go mod tidy
-go test -v ./... | gorderly -fd
-make check
-```
+Not yet confirmed with a real `go mod tidy`/`go test` run on the user's
+Mac -- `go.sum` needs regenerating before this builds.
