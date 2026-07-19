@@ -222,49 +222,123 @@ func TestTime(t *testing.T) {
 				})
 			})
 
-			// Boundary regression coverage for the ActionView distance_of_time_in_words bucket
-			// table this approximate-distance behavior ports, truncated at the "1 day" row
-			// since month/year buckets are out of scope. Each pair straddles a cutoff second
-			// from that table to lock in exactly where the wording flips.
+			// Boundary regression coverage for ActionView's distance_of_time_in_words bucket table (truncated at the "1 day" row); each context below sits on one cutoff second from that table.
 			describe("at the approximate-distance bucket table boundaries", func() {
 				context("with Approximate: false", func() {
 					opts := humane.TimeOptions{Approximate: humane.Bool(false)}
 
-					it("29s stays less than a minute, 30s rounds up to 1 minute", func() {
-						Expect(t, humane.DistanceInTime(ptr(base.Add(-29*time.Second)), base, opts)).To(Equal("less than a minute ago"))
-						Expect(t, humane.DistanceInTime(ptr(base.Add(-30*time.Second)), base, opts)).To(Equal("1 minute ago"))
+					context("29 seconds ago", func() {
+						subject := humane.DistanceInTime(ptr(base.Add(-29*time.Second)), base, opts)
+
+						it("stays less than a minute", func() {
+							Expect(t, subject).To(Equal("less than a minute ago"))
+						})
 					})
 
-					it("89s stays 1 minute, 90s rounds up to 2 minutes", func() {
-						Expect(t, humane.DistanceInTime(ptr(base.Add(-89*time.Second)), base, opts)).To(Equal("1 minute ago"))
-						Expect(t, humane.DistanceInTime(ptr(base.Add(-90*time.Second)), base, opts)).To(Equal("2 minutes ago"))
+					context("30 seconds ago", func() {
+						subject := humane.DistanceInTime(ptr(base.Add(-30*time.Second)), base, opts)
+
+						it("rounds up to 1 minute", func() {
+							Expect(t, subject).To(Equal("1 minute ago"))
+						})
 					})
 
-					it("44:29 stays 44 minutes, 44:30 rounds up to 1 hour", func() {
-						Expect(t, humane.DistanceInTime(ptr(base.Add(-(44*time.Minute+29*time.Second))), base, opts)).To(Equal("44 minutes ago"))
-						Expect(t, humane.DistanceInTime(ptr(base.Add(-(44*time.Minute+30*time.Second))), base, opts)).To(Equal("1 hour ago"))
+					context("89 seconds ago", func() {
+						subject := humane.DistanceInTime(ptr(base.Add(-89*time.Second)), base, opts)
+
+						it("stays 1 minute", func() {
+							Expect(t, subject).To(Equal("1 minute ago"))
+						})
 					})
 
-					it("89:29 stays 1 hour, 89:30 rounds up to 2 hours", func() {
-						Expect(t, humane.DistanceInTime(ptr(base.Add(-(89*time.Minute+29*time.Second))), base, opts)).To(Equal("1 hour ago"))
-						Expect(t, humane.DistanceInTime(ptr(base.Add(-(89*time.Minute+30*time.Second))), base, opts)).To(Equal("2 hours ago"))
+					context("90 seconds ago", func() {
+						subject := humane.DistanceInTime(ptr(base.Add(-90*time.Second)), base, opts)
+
+						it("rounds up to 2 minutes", func() {
+							Expect(t, subject).To(Equal("2 minutes ago"))
+						})
 					})
 
-					it("23:59:29 stays 24 hours, 23:59:30 rounds up to 1 day", func() {
-						Expect(t, humane.DistanceInTime(ptr(base.Add(-(23*time.Hour+59*time.Minute+29*time.Second))), base, opts)).To(Equal("24 hours ago"))
-						Expect(t, humane.DistanceInTime(ptr(base.Add(-(23*time.Hour+59*time.Minute+30*time.Second))), base, opts)).To(Equal("1 day ago"))
+					context("44 minutes 29 seconds ago", func() {
+						subject := humane.DistanceInTime(ptr(base.Add(-(44*time.Minute+29*time.Second))), base, opts)
+
+						it("stays 44 minutes", func() {
+							Expect(t, subject).To(Equal("44 minutes ago"))
+						})
+					})
+
+					context("44 minutes 30 seconds ago", func() {
+						subject := humane.DistanceInTime(ptr(base.Add(-(44*time.Minute+30*time.Second))), base, opts)
+
+						it("rounds up to 1 hour", func() {
+							Expect(t, subject).To(Equal("1 hour ago"))
+						})
+					})
+
+					context("89 minutes 29 seconds ago", func() {
+						subject := humane.DistanceInTime(ptr(base.Add(-(89*time.Minute+29*time.Second))), base, opts)
+
+						it("stays 1 hour", func() {
+							Expect(t, subject).To(Equal("1 hour ago"))
+						})
+					})
+
+					context("89 minutes 30 seconds ago", func() {
+						subject := humane.DistanceInTime(ptr(base.Add(-(89*time.Minute+30*time.Second))), base, opts)
+
+						it("rounds up to 2 hours", func() {
+							Expect(t, subject).To(Equal("2 hours ago"))
+						})
+					})
+
+					context("23 hours 59 minutes 29 seconds ago", func() {
+						subject := humane.DistanceInTime(ptr(base.Add(-(23*time.Hour+59*time.Minute+29*time.Second))), base, opts)
+
+						it("stays 24 hours", func() {
+							Expect(t, subject).To(Equal("24 hours ago"))
+						})
+					})
+
+					context("23 hours 59 minutes 30 seconds ago", func() {
+						subject := humane.DistanceInTime(ptr(base.Add(-(23*time.Hour+59*time.Minute+30*time.Second))), base, opts)
+
+						it("rounds up to 1 day", func() {
+							Expect(t, subject).To(Equal("1 day ago"))
+						})
 					})
 				})
 
 				context("with no options (Approximate true by default)", func() {
-					it("44:29 has no about, 44:30 gains about (entering the hour bucket)", func() {
-						Expect(t, humane.DistanceInTime(ptr(base.Add(-(44*time.Minute+29*time.Second))), base)).To(Equal("44 minutes ago"))
-						Expect(t, humane.DistanceInTime(ptr(base.Add(-(44*time.Minute+30*time.Second))), base)).To(Equal("about 1 hour ago"))
+					context("44 minutes 29 seconds ago", func() {
+						subject := humane.DistanceInTime(ptr(base.Add(-(44*time.Minute+29*time.Second))), base)
+
+						it("has no about", func() {
+							Expect(t, subject).To(Equal("44 minutes ago"))
+						})
 					})
 
-					it("23:59:29 keeps about, 23:59:30 drops about (entering the day bucket)", func() {
-						Expect(t, humane.DistanceInTime(ptr(base.Add(-(23*time.Hour+59*time.Minute+29*time.Second))), base)).To(Equal("about 24 hours ago"))
-						Expect(t, humane.DistanceInTime(ptr(base.Add(-(23*time.Hour+59*time.Minute+30*time.Second))), base)).To(Equal("1 day ago"))
+					context("44 minutes 30 seconds ago", func() {
+						subject := humane.DistanceInTime(ptr(base.Add(-(44*time.Minute+30*time.Second))), base)
+
+						it("gains about, entering the hour bucket", func() {
+							Expect(t, subject).To(Equal("about 1 hour ago"))
+						})
+					})
+
+					context("23 hours 59 minutes 29 seconds ago", func() {
+						subject := humane.DistanceInTime(ptr(base.Add(-(23*time.Hour+59*time.Minute+29*time.Second))), base)
+
+						it("keeps about", func() {
+							Expect(t, subject).To(Equal("about 24 hours ago"))
+						})
+					})
+
+					context("23 hours 59 minutes 30 seconds ago", func() {
+						subject := humane.DistanceInTime(ptr(base.Add(-(23*time.Hour+59*time.Minute+30*time.Second))), base)
+
+						it("drops about, entering the day bucket", func() {
+							Expect(t, subject).To(Equal("1 day ago"))
+						})
 					})
 				})
 			})
