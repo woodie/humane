@@ -20,129 +20,204 @@ func TestTime(t *testing.T) {
 		describe("DistanceInTime", func() {
 			base := time.Date(2026, 7, 8, 12, 0, 0, 0, time.UTC)
 
-			context("with no options (the recommended defaults: Approximate true, IncludeSeconds false -- matching ActionView's own defaults)", func() {
-				context("just now", func() {
+			context("just now", func() {
+				at := base
+
+				context("with no options (the recommended defaults: Approximate true, IncludeSeconds false -- matching ActionView's own defaults)", func() {
+					subject := humane.DistanceInTime(ptr(at), base)
+
 					it("displays less than a minute ago", func() {
-						Expect(t, humane.DistanceInTime(ptr(base), base)).To(Equal("less than a minute ago"))
+						Expect(t, subject).To(Equal("less than a minute ago"))
 					})
 				})
 
-				context("45 seconds ago", func() {
-					it("rounds up to 1 minute ago (past the 30-second cutoff)", func() {
-						Expect(t, humane.DistanceInTime(ptr(base.Add(-45*time.Second)), base)).To(Equal("1 minute ago"))
-					})
-				})
+				context("with IncludeSeconds: true", func() {
+					subject := humane.DistanceInTime(ptr(at), base, humane.TimeOptions{IncludeSeconds: true})
 
-				context("1 minute ago", func() {
-					it("displays 1 minute ago, singular", func() {
-						Expect(t, humane.DistanceInTime(ptr(base.Add(-1*time.Minute)), base)).To(Equal("1 minute ago"))
-					})
-				})
-
-				context("3 minutes ago", func() {
-					it("displays 3 minutes ago", func() {
-						Expect(t, humane.DistanceInTime(ptr(base.Add(-3*time.Minute)), base)).To(Equal("3 minutes ago"))
-					})
-				})
-
-				context("1 hour ago", func() {
-					it("displays about 1 hour ago", func() {
-						Expect(t, humane.DistanceInTime(ptr(base.Add(-1*time.Hour)), base)).To(Equal("about 1 hour ago"))
-					})
-				})
-
-				context("15 hours ago", func() {
-					it("displays about 15 hours ago", func() {
-						Expect(t, humane.DistanceInTime(ptr(base.Add(-15*time.Hour)), base)).To(Equal("about 15 hours ago"))
-					})
-				})
-
-				context("30 hours ago", func() {
-					it("rolls up to 1 day ago, with no about (ActionView's table has none on the day bucket)", func() {
-						Expect(t, humane.DistanceInTime(ptr(base.Add(-30*time.Hour)), base)).To(Equal("1 day ago"))
-					})
-				})
-
-				context("3 days ago", func() {
-					it("displays 3 days ago", func() {
-						Expect(t, humane.DistanceInTime(ptr(base.Add(-3*24*time.Hour)), base)).To(Equal("3 days ago"))
-					})
-				})
-
-				context("45 seconds from now", func() {
-					it("rounds up to in 1 minute (past the 30-second cutoff)", func() {
-						Expect(t, humane.DistanceInTime(ptr(base.Add(45*time.Second)), base)).To(Equal("in 1 minute"))
-					})
-				})
-
-				context("3 minutes from now", func() {
-					it("displays in 3 minutes", func() {
-						Expect(t, humane.DistanceInTime(ptr(base.Add(3*time.Minute)), base)).To(Equal("in 3 minutes"))
-					})
-				})
-
-				context("3 hours from now", func() {
-					it("displays in about 3 hours", func() {
-						Expect(t, humane.DistanceInTime(ptr(base.Add(3*time.Hour)), base)).To(Equal("in about 3 hours"))
-					})
-				})
-			})
-
-			context("with IncludeSeconds: true", func() {
-				opts := humane.TimeOptions{IncludeSeconds: true}
-
-				context("just now", func() {
 					it("displays 0 seconds ago", func() {
-						Expect(t, humane.DistanceInTime(ptr(base), base, opts)).To(Equal("0 seconds ago"))
-					})
-				})
-
-				context("1 second ago", func() {
-					it("displays 1 second ago, singular", func() {
-						Expect(t, humane.DistanceInTime(ptr(base.Add(-1*time.Second)), base, opts)).To(Equal("1 second ago"))
-					})
-				})
-
-				context("45 seconds ago", func() {
-					it("displays 45 seconds ago", func() {
-						Expect(t, humane.DistanceInTime(ptr(base.Add(-45*time.Second)), base, opts)).To(Equal("45 seconds ago"))
-					})
-				})
-
-				context("45 seconds from now", func() {
-					it("displays in 45 seconds", func() {
-						Expect(t, humane.DistanceInTime(ptr(base.Add(45*time.Second)), base, opts)).To(Equal("in 45 seconds"))
+						Expect(t, subject).To(Equal("0 seconds ago"))
 					})
 				})
 			})
 
-			context("with Approximate: false", func() {
-				opts := humane.TimeOptions{Approximate: humane.Bool(false)}
+			context("1 second ago", func() {
+				at := base.Add(-1 * time.Second)
 
-				context("1 hour ago", func() {
-					it("displays the exact count, no about prefix", func() {
-						Expect(t, humane.DistanceInTime(ptr(base.Add(-1*time.Hour)), base, opts)).To(Equal("1 hour ago"))
+				context("with IncludeSeconds: true", func() {
+					subject := humane.DistanceInTime(ptr(at), base, humane.TimeOptions{IncludeSeconds: true})
+
+					it("displays 1 second ago, singular", func() {
+						Expect(t, subject).To(Equal("1 second ago"))
+					})
+				})
+			})
+
+			context("45 seconds ago", func() {
+				at := base.Add(-45 * time.Second)
+
+				context("with no options", func() {
+					subject := humane.DistanceInTime(ptr(at), base)
+
+					it("rounds up to 1 minute ago (past the 30-second cutoff)", func() {
+						Expect(t, subject).To(Equal("1 minute ago"))
 					})
 				})
 
-				context("15 hours ago", func() {
+				context("with IncludeSeconds: true", func() {
+					subject := humane.DistanceInTime(ptr(at), base, humane.TimeOptions{IncludeSeconds: true})
+
+					it("displays 45 seconds ago", func() {
+						Expect(t, subject).To(Equal("45 seconds ago"))
+					})
+				})
+			})
+
+			context("1 minute ago", func() {
+				at := base.Add(-1 * time.Minute)
+
+				context("with no options", func() {
+					subject := humane.DistanceInTime(ptr(at), base)
+
+					it("displays 1 minute ago, singular", func() {
+						Expect(t, subject).To(Equal("1 minute ago"))
+					})
+				})
+			})
+
+			context("3 minutes ago", func() {
+				at := base.Add(-3 * time.Minute)
+
+				context("with no options", func() {
+					subject := humane.DistanceInTime(ptr(at), base)
+
+					it("displays 3 minutes ago", func() {
+						Expect(t, subject).To(Equal("3 minutes ago"))
+					})
+				})
+			})
+
+			context("1 hour ago", func() {
+				at := base.Add(-1 * time.Hour)
+
+				context("with no options", func() {
+					subject := humane.DistanceInTime(ptr(at), base)
+
+					it("displays about 1 hour ago", func() {
+						Expect(t, subject).To(Equal("about 1 hour ago"))
+					})
+				})
+
+				context("with Approximate: false", func() {
+					subject := humane.DistanceInTime(ptr(at), base, humane.TimeOptions{Approximate: humane.Bool(false)})
+
+					it("displays the exact count, no about prefix", func() {
+						Expect(t, subject).To(Equal("1 hour ago"))
+					})
+				})
+			})
+
+			context("15 hours ago", func() {
+				at := base.Add(-15 * time.Hour)
+
+				context("with no options", func() {
+					subject := humane.DistanceInTime(ptr(at), base)
+
+					it("displays about 15 hours ago", func() {
+						Expect(t, subject).To(Equal("about 15 hours ago"))
+					})
+				})
+
+				context("with Approximate: false", func() {
+					subject := humane.DistanceInTime(ptr(at), base, humane.TimeOptions{Approximate: humane.Bool(false)})
+
 					it("displays 15 hours ago", func() {
-						Expect(t, humane.DistanceInTime(ptr(base.Add(-15*time.Hour)), base, opts)).To(Equal("15 hours ago"))
+						Expect(t, subject).To(Equal("15 hours ago"))
+					})
+				})
+			})
+
+			context("30 hours ago", func() {
+				at := base.Add(-30 * time.Hour)
+
+				context("with no options", func() {
+					subject := humane.DistanceInTime(ptr(at), base)
+
+					it("rolls up to 1 day ago, with no about (ActionView's table has none on the day bucket)", func() {
+						Expect(t, subject).To(Equal("1 day ago"))
+					})
+				})
+			})
+
+			context("3 days ago", func() {
+				at := base.Add(-3 * 24 * time.Hour)
+
+				context("with no options", func() {
+					subject := humane.DistanceInTime(ptr(at), base)
+
+					it("displays 3 days ago", func() {
+						Expect(t, subject).To(Equal("3 days ago"))
+					})
+				})
+			})
+
+			context("45 seconds from now", func() {
+				at := base.Add(45 * time.Second)
+
+				context("with no options", func() {
+					subject := humane.DistanceInTime(ptr(at), base)
+
+					it("rounds up to in 1 minute (past the 30-second cutoff)", func() {
+						Expect(t, subject).To(Equal("in 1 minute"))
+					})
+				})
+
+				context("with IncludeSeconds: true", func() {
+					subject := humane.DistanceInTime(ptr(at), base, humane.TimeOptions{IncludeSeconds: true})
+
+					it("displays in 45 seconds", func() {
+						Expect(t, subject).To(Equal("in 45 seconds"))
+					})
+				})
+			})
+
+			context("3 minutes from now", func() {
+				at := base.Add(3 * time.Minute)
+
+				context("with no options", func() {
+					subject := humane.DistanceInTime(ptr(at), base)
+
+					it("displays in 3 minutes", func() {
+						Expect(t, subject).To(Equal("in 3 minutes"))
+					})
+				})
+			})
+
+			context("3 hours from now", func() {
+				at := base.Add(3 * time.Hour)
+
+				context("with no options", func() {
+					subject := humane.DistanceInTime(ptr(at), base)
+
+					it("displays in about 3 hours", func() {
+						Expect(t, subject).To(Equal("in about 3 hours"))
 					})
 				})
 			})
 
 			describe("nil handling", func() {
 				context("when at is nil and WhenNil is set", func() {
+					subject := humane.DistanceInTime(nil, base, humane.TimeOptions{WhenNil: "an unknown time"})
+
 					it("returns WhenNil without formatting", func() {
-						opts := humane.TimeOptions{WhenNil: "an unknown time"}
-						Expect(t, humane.DistanceInTime(nil, base, opts)).To(Equal("an unknown time"))
+						Expect(t, subject).To(Equal("an unknown time"))
 					})
 				})
 
 				context("when at is nil and WhenNil is left unset", func() {
+					subject := humane.DistanceInTime(nil, base)
+
 					it("returns an empty string", func() {
-						Expect(t, humane.DistanceInTime(nil, base)).To(Equal(""))
+						Expect(t, subject).To(Equal(""))
 					})
 				})
 			})
@@ -200,14 +275,18 @@ func TestTime(t *testing.T) {
 		// wording/bucket coverage this doesn't need to repeat.
 		describe("TimeAgo", func() {
 			context("just now", func() {
+				subject := humane.TimeAgo(time.Now())
+
 				it("displays less than a minute ago", func() {
-					Expect(t, humane.TimeAgo(time.Now())).To(Equal("less than a minute ago"))
+					Expect(t, subject).To(Equal("less than a minute ago"))
 				})
 			})
 
 			context("3 minutes ago", func() {
+				subject := humane.TimeAgo(time.Now().Add(-3 * time.Minute))
+
 				it("forwards to DistanceInTime with time.Now() as relativeTo", func() {
-					Expect(t, humane.TimeAgo(time.Now().Add(-3*time.Minute))).To(Equal("3 minutes ago"))
+					Expect(t, subject).To(Equal("3 minutes ago"))
 				})
 			})
 		})
