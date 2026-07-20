@@ -16,38 +16,41 @@ versioning don't share a tag namespace cleanly.
 
 ## Writing tests here
 
-Tests use [`sclevine/spec`](https://github.com/sclevine/spec) (replaced
-in `go.mod` with [`github.com/woodie/spec`](https://github.com/woodie/spec))
-for structure and [`github.com/woodie/expect`](https://github.com/woodie/expect)
-for assertions -- the same pairing `lambada`/`gorderly` use. Shape:
+Tests use plain [`sclevine/spec`](https://github.com/sclevine/spec) (real
+upstream, no fork, no `replace` directive -- see "Reversal: moved off the
+`woodie/spec` fork" below) for structure and
+[`github.com/woodie/expect`](https://github.com/woodie/expect) for
+assertions -- the same pairing `lambada`/`gorderly` use. Shape:
 
 ```go
 func TestHumanSize(t *testing.T) {
-	spec.RunAliased(t, "HumanSize", humanSizeSuite)
-}
+	spec.Run(t, "HumanSize", func(t *testing.T, describe spec.G, it spec.S) {
+		context, before := describe, it.Before
 
-func humanSizeSuite(t *testing.T, describe, context spec.Describe, it spec.S, before, after func(func())) {
-	context("with 0 bytes", func() {
-		it("formats as Zero KB", func() {
-			expect(humane.HumanSize(0), t).To(Equal("Zero KB"))
+		context("with 0 bytes", func() {
+			it("formats as Zero KB", func() {
+				expect(humane.HumanSize(0), t).To(Equal("Zero KB"))
+			})
 		})
 	})
 }
 ```
 
-`describe`/`context`/`it` nest like RSpec; `before`/`after` register
-hooks (only name the ones a given test actually uses -- `_` the rest,
-same convention as `lambada-mta`). Each `Test*` function is a one-liner
-into a named top-level `*Suite` function, not an inline closure -- see
-`lambada`'s own `docs/COWORK.md` for why. `expect` is dot-imported, and
-every call site uses the recommended lowercase alias (`expect_alias_test.go`,
-one line, shared by every `_test.go` file in this package) so matchers
-read as `expect(got, t).To(Matcher)`/`.NotTo(Matcher)`, blending in with
-`describe`/`context`/`it`/`before`/`after` instead of standing out
-capitalized -- see `expect`'s own README, "Lowercase call sites". No
-literal `/` in any `describe`/`context`/`it` string -- both `spec`'s flat
-mode and `gorderly`'s tree renderer treat `/` as a real hierarchy
-separator, so one shows up as spurious extra nesting.
+`describe`/`context`/`it` nest like RSpec; `context`/`before`/`after` are
+`describe`/`it.Before`/`it.After` under friendlier names, assigned once as
+the first line inside the closure (only name the ones a given suite
+actually uses, drop the rest) -- no fork, nothing generated. Each `Test*`
+function passes its suite straight to `spec.Run` as an inline closure, not
+a separate named `*Suite` function -- see `gorderly`'s/`lambada`'s own
+`docs/COWORK.md` for why. `expect` is dot-imported, and every call site
+uses the recommended lowercase alias (`config_test.go`, one line plus a
+commented-out Calculator example, shared by every `_test.go` file in this
+package) so matchers read as `expect(got, t).To(Matcher)`/
+`.NotTo(Matcher)`, blending in with `describe`/`context`/`it`/`before`/
+`after` instead of standing out capitalized -- see `expect`'s own README,
+"Lowercase call sites". No literal `/` in any `describe`/`context`/`it`
+string -- both `spec`'s flat mode and `gorderly`'s tree renderer treat `/`
+as a real hierarchy separator, so one shows up as spurious extra nesting.
 
 Run with `go test -v ./... | gorderly -fd` (or `-fv` for Vitest-style
 output) to see the real nested tree instead of `go test`'s flat
@@ -372,7 +375,7 @@ above. Nothing left open on that front.
 
 ## Current test stack
 
-Tests use `sclevine/spec` (replaced with `github.com/woodie/spec`) +
+Tests use plain `sclevine/spec` (no fork, no `replace` directive) +
 `github.com/woodie/expect`, same as `lambada`/`gorderly`. `go test -v
 ./... | gorderly -fd`, or `make test`/`make check`. `ginkgo-fd` itself
 stays as a dev dependency for other repos only -- not used here.
@@ -397,3 +400,31 @@ confirmed clean -- see "Current test stack" above.
 No behavior change to `HumanSize`/`TimeAgo`/`DistanceInTime` -- test-suite
 and tooling only, so no new `humane` version tag for this, matching the
 same call made for `lambada`'s equivalent update.
+
+## Reversal: moved off the `woodie/spec` fork, back to plain upstream
+
+Superseding the "named suite functions" change directly above:
+`size_test.go`/`time_test.go` used `spec.RunAliased` against the
+`github.com/woodie/spec` fork, with `humanSizeSuite`/`timeSuite` as
+separate named functions. Walked back in favor of plain
+`github.com/sclevine/spec` -- no `replace` directive, no `RunAliased`.
+The fork's whole value turned out to be self-inflicted: `RunAliased`
+exists to hand `before`/`after`/`context` in as bound parameters so no
+per-file alias line is needed, but the one-line alternative --
+`context, before := describe, it.Before`, written as the first line
+inside a plain `spec.Run` closure -- needs nothing from the fork and
+reads more plainly than either the six-parameter signature or a separate
+named suite function did. Same reasoning recorded in `gorderly`'s and
+`lambada`'s own `docs/COWORK.md`, which this mirrors.
+
+`go.mod`'s `replace github.com/sclevine/spec => github.com/woodie/spec
+v0.1.0` is dropped; `go.sum` needs a real `go mod tidy` on the user's Mac
+to drop the stale `woodie/spec` entries (no Go toolchain in the sandbox --
+see "Sandbox limitation" above). `expect_alias_test.go` renamed to
+`config_test.go`, matching `gorderly`'s/`lambada`'s shape -- the real
+`expect` alias plus a commented-out `/* ... */` Calculator example
+demonstrating the convention, not executed as part of the suite.
+
+No behavior change to `HumanSize`/`TimeAgo`/`DistanceInTime` -- test-suite
+and tooling only, so no new `humane` version tag for this, matching the
+same call made for `gorderly`'s and `lambada`'s equivalent reversal.
