@@ -23,11 +23,13 @@ for assertions -- the same pairing `lambada`/`gorderly` use. Shape:
 
 ```go
 func TestHumanSize(t *testing.T) {
-	spec.RunAliased(t, "HumanSize", func(t *testing.T, describe, context spec.Describe, it spec.S, before, after func(func())) {
-		context("with 0 bytes", func() {
-			it("formats as Zero KB", func() {
-				Expect(t, humane.HumanSize(0)).To(Equal("Zero KB"))
-			})
+	spec.RunAliased(t, "HumanSize", humanSizeSuite)
+}
+
+func humanSizeSuite(t *testing.T, describe, context spec.Describe, it spec.S, before, after func(func())) {
+	context("with 0 bytes", func() {
+		it("formats as Zero KB", func() {
+			expect(humane.HumanSize(0), t).To(Equal("Zero KB"))
 		})
 	})
 }
@@ -35,11 +37,17 @@ func TestHumanSize(t *testing.T) {
 
 `describe`/`context`/`it` nest like RSpec; `before`/`after` register
 hooks (only name the ones a given test actually uses -- `_` the rest,
-same convention as `lambada-mta`). `expect` is dot-imported so matchers
-read as `Expect(t, got).To(Matcher)`/`.NotTo(Matcher)`. No literal `/` in
-any `describe`/`context`/`it` string -- both `spec`'s flat mode and
-`gorderly`'s tree renderer treat `/` as a real hierarchy separator, so
-one shows up as spurious extra nesting.
+same convention as `lambada-mta`). Each `Test*` function is a one-liner
+into a named top-level `*Suite` function, not an inline closure -- see
+`lambada`'s own `docs/COWORK.md` for why. `expect` is dot-imported, and
+every call site uses the recommended lowercase alias (`expect_alias_test.go`,
+one line, shared by every `_test.go` file in this package) so matchers
+read as `expect(got, t).To(Matcher)`/`.NotTo(Matcher)`, blending in with
+`describe`/`context`/`it`/`before`/`after` instead of standing out
+capitalized -- see `expect`'s own README, "Lowercase call sites". No
+literal `/` in any `describe`/`context`/`it` string -- both `spec`'s flat
+mode and `gorderly`'s tree renderer treat `/` as a real hierarchy
+separator, so one shows up as spurious extra nesting.
 
 Run with `go test -v ./... | gorderly -fd` (or `-fv` for Vitest-style
 output) to see the real nested tree instead of `go test`'s flat
@@ -371,3 +379,21 @@ stays as a dev dependency for other repos only -- not used here.
 
 Not yet confirmed with a real `go mod tidy`/`go test` run on the user's
 Mac -- `go.sum` needs regenerating before this builds.
+
+## `expect` v0.2.0: `Expect(got, t)`, lowercase alias, named suite functions
+
+`size_test.go`/`time_test.go` were still on `expect` v0.1.0's `Expect(t,
+got)` order, calling it directly (no lowercase alias) with the suite body
+inline inside `spec.RunAliased`'s closure -- the same shape `lambada`'s
+test files were in before its own session (see its `docs/COWORK.md`).
+Brought in line with the same three changes: every `Expect(t, x)` call
+site is now `expect(x, t)` via a new shared `expect_alias_test.go` (one
+line, covers both test files in this package); `TestHumanSize`/`TestTime`
+are now one-liners into named `humanSizeSuite`/`timeSuite` functions
+instead of inline closures. `go.mod`'s `github.com/woodie/expect` pin
+bumped to `v0.2.0` -- `go.sum` still needs a real `go mod tidy` on the
+user's Mac before this builds, same outstanding item as above.
+
+No behavior change to `HumanSize`/`TimeAgo`/`DistanceInTime` -- test-suite
+and tooling only, so no new `humane` version tag for this, matching the
+same call made for `lambada`'s equivalent update.
