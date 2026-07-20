@@ -377,8 +377,8 @@ Tests use `sclevine/spec` (replaced with `github.com/woodie/spec`) +
 ./... | gorderly -fd`, or `make test`/`make check`. `ginkgo-fd` itself
 stays as a dev dependency for other repos only -- not used here.
 
-Not yet confirmed with a real `go mod tidy`/`go test` run on the user's
-Mac -- `go.sum` needs regenerating before this builds.
+Confirmed for real on the user's own Mac: `go test -v ./... | gorderly
+-fd` -- 0 failed, 0 skipped, 45 total.
 
 ## `expect` v0.2.0: `Expect(got, t)`, lowercase alias, named suite functions
 
@@ -391,8 +391,8 @@ site is now `expect(x, t)` via a new shared `expect_alias_test.go` (one
 line, covers both test files in this package); `TestHumanSize`/`TestTime`
 are now one-liners into named `humanSizeSuite`/`timeSuite` functions
 instead of inline closures. `go.mod`'s `github.com/woodie/expect` pin
-bumped to `v0.2.0` -- `go.sum` still needs a real `go mod tidy` on the
-user's Mac before this builds, same outstanding item as above.
+bumped to `v0.2.0`, `go.sum` regenerated for real on the user's Mac,
+confirmed clean -- see "Current test stack" above.
 
 No behavior change to `HumanSize`/`TimeAgo`/`DistanceInTime` -- test-suite
 and tooling only, so no new `humane` version tag for this, matching the
