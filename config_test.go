@@ -6,31 +6,9 @@ import (
 	. "github.com/woodie/expect"
 )
 
-// expect is the lowercase call-site alias recommended in expect's own
-// README ("Lowercase call sites") -- a one-line generic pass-through
-// declared once per test package, since Go's capitalize-to-export rule
-// only applies across the package boundary. Keeps every call site here
-// reading lowercase alongside describe/context/it/before instead of
-// standing out as the one capitalized word in the block, with zero loss of
-// compile-time type inference. Shared by size_test.go and time_test.go.
+// Allow all tests in this package to use lowercase expect()
 func expect[T any](got T, t testing.TB) Expectation[T] { return Expect(got, t) }
 
-// Improve readability with vars set for structural functions and lifecycle hooks
-/*
-func TestCalculator(t *testing.T) {
-	spec.Run(t, "Calculator", func(t *testing.T, describe spec.G, it spec.S) {
-		context, before, after := describe, it.Before, it.After // HERE
-
-		var calculator *Calculator
-		before(func() { calculator = NewCalculator() })
-		after(func() { calculator.Clear() })
-
-		describe("#add", func() {
-			context("with positive numbers", func() {
-				it("returns the correct sum", func() {
-					expect(calculator.Add(2, 3), t).To(Equal(5))
-				})
-			})
-		})
-	})
-} */
+// Improve readability with structural functions and lifecycle hooks.
+// Right below spec.Run -> context, before, after := describe, it.Before, it.After
+// https://gist.github.com/woodie/35ee3fc2bea01b775b95b3fe5e950a05#file-example-go-L3
