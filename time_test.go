@@ -23,7 +23,8 @@ func TestTime(t *testing.T) {
 			var at *time.Time
 			var base time.Time
 			var opts humane.TimeOptions
-			subject := func() string { return humane.DistanceInTime(at, base, opts) }
+			var result string
+			it.JustBeforeEach(func() { result = humane.DistanceInTime(at, base, opts) })
 
 			it.BeforeEach(func() {
 				base = time.Date(2026, 7, 8, 12, 0, 0, 0, time.UTC)
@@ -35,7 +36,7 @@ func TestTime(t *testing.T) {
 
 				context("with no options (the recommended defaults: Approximate true, IncludeSeconds false -- matching ActionView's own defaults)", func() {
 					it("displays less than a minute ago", func() {
-						expect(subject(), t).To(Equal("less than a minute ago"))
+						expect(result, t).To(Equal("less than a minute ago"))
 					})
 				})
 
@@ -43,7 +44,7 @@ func TestTime(t *testing.T) {
 					it.BeforeEach(func() { opts = humane.TimeOptions{IncludeSeconds: true} })
 
 					it("displays 0 seconds ago", func() {
-						expect(subject(), t).To(Equal("0 seconds ago"))
+						expect(result, t).To(Equal("0 seconds ago"))
 					})
 				})
 			})
@@ -55,7 +56,7 @@ func TestTime(t *testing.T) {
 					it.BeforeEach(func() { opts = humane.TimeOptions{IncludeSeconds: true} })
 
 					it("displays 1 second ago, singular", func() {
-						expect(subject(), t).To(Equal("1 second ago"))
+						expect(result, t).To(Equal("1 second ago"))
 					})
 				})
 			})
@@ -65,7 +66,7 @@ func TestTime(t *testing.T) {
 
 				context("with no options", func() {
 					it("rounds up to 1 minute ago (past the 30-second cutoff)", func() {
-						expect(subject(), t).To(Equal("1 minute ago"))
+						expect(result, t).To(Equal("1 minute ago"))
 					})
 				})
 
@@ -73,7 +74,7 @@ func TestTime(t *testing.T) {
 					it.BeforeEach(func() { opts = humane.TimeOptions{IncludeSeconds: true} })
 
 					it("displays 45 seconds ago", func() {
-						expect(subject(), t).To(Equal("45 seconds ago"))
+						expect(result, t).To(Equal("45 seconds ago"))
 					})
 				})
 			})
@@ -83,7 +84,7 @@ func TestTime(t *testing.T) {
 
 				context("with no options", func() {
 					it("displays 1 minute ago, singular", func() {
-						expect(subject(), t).To(Equal("1 minute ago"))
+						expect(result, t).To(Equal("1 minute ago"))
 					})
 				})
 			})
@@ -93,7 +94,7 @@ func TestTime(t *testing.T) {
 
 				context("with no options", func() {
 					it("displays 3 minutes ago", func() {
-						expect(subject(), t).To(Equal("3 minutes ago"))
+						expect(result, t).To(Equal("3 minutes ago"))
 					})
 				})
 			})
@@ -103,7 +104,7 @@ func TestTime(t *testing.T) {
 
 				context("with no options", func() {
 					it("displays about 1 hour ago", func() {
-						expect(subject(), t).To(Equal("about 1 hour ago"))
+						expect(result, t).To(Equal("about 1 hour ago"))
 					})
 				})
 
@@ -111,7 +112,7 @@ func TestTime(t *testing.T) {
 					it.BeforeEach(func() { opts = humane.TimeOptions{Approximate: humane.Bool(false)} })
 
 					it("displays the exact count, no about prefix", func() {
-						expect(subject(), t).To(Equal("1 hour ago"))
+						expect(result, t).To(Equal("1 hour ago"))
 					})
 				})
 			})
@@ -121,7 +122,7 @@ func TestTime(t *testing.T) {
 
 				context("with no options", func() {
 					it("displays about 15 hours ago", func() {
-						expect(subject(), t).To(Equal("about 15 hours ago"))
+						expect(result, t).To(Equal("about 15 hours ago"))
 					})
 				})
 
@@ -129,7 +130,7 @@ func TestTime(t *testing.T) {
 					it.BeforeEach(func() { opts = humane.TimeOptions{Approximate: humane.Bool(false)} })
 
 					it("displays 15 hours ago", func() {
-						expect(subject(), t).To(Equal("15 hours ago"))
+						expect(result, t).To(Equal("15 hours ago"))
 					})
 				})
 			})
@@ -139,7 +140,7 @@ func TestTime(t *testing.T) {
 
 				context("with no options", func() {
 					it("rolls up to 1 day ago, with no about (ActionView's table has none on the day bucket)", func() {
-						expect(subject(), t).To(Equal("1 day ago"))
+						expect(result, t).To(Equal("1 day ago"))
 					})
 				})
 			})
@@ -149,7 +150,7 @@ func TestTime(t *testing.T) {
 
 				context("with no options", func() {
 					it("displays 3 days ago", func() {
-						expect(subject(), t).To(Equal("3 days ago"))
+						expect(result, t).To(Equal("3 days ago"))
 					})
 				})
 			})
@@ -159,7 +160,7 @@ func TestTime(t *testing.T) {
 
 				context("with no options", func() {
 					it("rounds up to in 1 minute (past the 30-second cutoff)", func() {
-						expect(subject(), t).To(Equal("in 1 minute"))
+						expect(result, t).To(Equal("in 1 minute"))
 					})
 				})
 
@@ -167,7 +168,7 @@ func TestTime(t *testing.T) {
 					it.BeforeEach(func() { opts = humane.TimeOptions{IncludeSeconds: true} })
 
 					it("displays in 45 seconds", func() {
-						expect(subject(), t).To(Equal("in 45 seconds"))
+						expect(result, t).To(Equal("in 45 seconds"))
 					})
 				})
 			})
@@ -177,7 +178,7 @@ func TestTime(t *testing.T) {
 
 				context("with no options", func() {
 					it("displays in 3 minutes", func() {
-						expect(subject(), t).To(Equal("in 3 minutes"))
+						expect(result, t).To(Equal("in 3 minutes"))
 					})
 				})
 			})
@@ -187,7 +188,7 @@ func TestTime(t *testing.T) {
 
 				context("with no options", func() {
 					it("displays in about 3 hours", func() {
-						expect(subject(), t).To(Equal("in about 3 hours"))
+						expect(result, t).To(Equal("in about 3 hours"))
 					})
 				})
 			})
@@ -199,13 +200,13 @@ func TestTime(t *testing.T) {
 					it.BeforeEach(func() { opts = humane.TimeOptions{WhenNil: "an unknown time"} })
 
 					it("returns WhenNil without formatting", func() {
-						expect(subject(), t).To(Equal("an unknown time"))
+						expect(result, t).To(Equal("an unknown time"))
 					})
 				})
 
 				context("when at is nil and WhenNil is left unset", func() {
 					it("returns an empty string", func() {
-						expect(subject(), t).To(Equal(""))
+						expect(result, t).To(Equal(""))
 					})
 				})
 			})
@@ -219,7 +220,7 @@ func TestTime(t *testing.T) {
 						it.BeforeEach(func() { at = ptr(base.Add(-29 * time.Second)) })
 
 						it("stays less than a minute", func() {
-							expect(subject(), t).To(Equal("less than a minute ago"))
+							expect(result, t).To(Equal("less than a minute ago"))
 						})
 					})
 
@@ -227,7 +228,7 @@ func TestTime(t *testing.T) {
 						it.BeforeEach(func() { at = ptr(base.Add(-30 * time.Second)) })
 
 						it("rounds up to 1 minute", func() {
-							expect(subject(), t).To(Equal("1 minute ago"))
+							expect(result, t).To(Equal("1 minute ago"))
 						})
 					})
 
@@ -235,7 +236,7 @@ func TestTime(t *testing.T) {
 						it.BeforeEach(func() { at = ptr(base.Add(-89 * time.Second)) })
 
 						it("stays 1 minute", func() {
-							expect(subject(), t).To(Equal("1 minute ago"))
+							expect(result, t).To(Equal("1 minute ago"))
 						})
 					})
 
@@ -243,7 +244,7 @@ func TestTime(t *testing.T) {
 						it.BeforeEach(func() { at = ptr(base.Add(-90 * time.Second)) })
 
 						it("rounds up to 2 minutes", func() {
-							expect(subject(), t).To(Equal("2 minutes ago"))
+							expect(result, t).To(Equal("2 minutes ago"))
 						})
 					})
 
@@ -251,7 +252,7 @@ func TestTime(t *testing.T) {
 						it.BeforeEach(func() { at = ptr(base.Add(-(44*time.Minute + 29*time.Second))) })
 
 						it("stays 44 minutes", func() {
-							expect(subject(), t).To(Equal("44 minutes ago"))
+							expect(result, t).To(Equal("44 minutes ago"))
 						})
 					})
 
@@ -259,7 +260,7 @@ func TestTime(t *testing.T) {
 						it.BeforeEach(func() { at = ptr(base.Add(-(44*time.Minute + 30*time.Second))) })
 
 						it("rounds up to 1 hour", func() {
-							expect(subject(), t).To(Equal("1 hour ago"))
+							expect(result, t).To(Equal("1 hour ago"))
 						})
 					})
 
@@ -267,7 +268,7 @@ func TestTime(t *testing.T) {
 						it.BeforeEach(func() { at = ptr(base.Add(-(89*time.Minute + 29*time.Second))) })
 
 						it("stays 1 hour", func() {
-							expect(subject(), t).To(Equal("1 hour ago"))
+							expect(result, t).To(Equal("1 hour ago"))
 						})
 					})
 
@@ -275,7 +276,7 @@ func TestTime(t *testing.T) {
 						it.BeforeEach(func() { at = ptr(base.Add(-(89*time.Minute + 30*time.Second))) })
 
 						it("rounds up to 2 hours", func() {
-							expect(subject(), t).To(Equal("2 hours ago"))
+							expect(result, t).To(Equal("2 hours ago"))
 						})
 					})
 
@@ -283,7 +284,7 @@ func TestTime(t *testing.T) {
 						it.BeforeEach(func() { at = ptr(base.Add(-(23*time.Hour + 59*time.Minute + 29*time.Second))) })
 
 						it("stays 24 hours", func() {
-							expect(subject(), t).To(Equal("24 hours ago"))
+							expect(result, t).To(Equal("24 hours ago"))
 						})
 					})
 
@@ -291,7 +292,7 @@ func TestTime(t *testing.T) {
 						it.BeforeEach(func() { at = ptr(base.Add(-(23*time.Hour + 59*time.Minute + 30*time.Second))) })
 
 						it("rounds up to 1 day", func() {
-							expect(subject(), t).To(Equal("1 day ago"))
+							expect(result, t).To(Equal("1 day ago"))
 						})
 					})
 				})
@@ -301,7 +302,7 @@ func TestTime(t *testing.T) {
 						it.BeforeEach(func() { at = ptr(base.Add(-(44*time.Minute + 29*time.Second))) })
 
 						it("has no about", func() {
-							expect(subject(), t).To(Equal("44 minutes ago"))
+							expect(result, t).To(Equal("44 minutes ago"))
 						})
 					})
 
@@ -309,7 +310,7 @@ func TestTime(t *testing.T) {
 						it.BeforeEach(func() { at = ptr(base.Add(-(44*time.Minute + 30*time.Second))) })
 
 						it("gains about, entering the hour bucket", func() {
-							expect(subject(), t).To(Equal("about 1 hour ago"))
+							expect(result, t).To(Equal("about 1 hour ago"))
 						})
 					})
 
@@ -317,7 +318,7 @@ func TestTime(t *testing.T) {
 						it.BeforeEach(func() { at = ptr(base.Add(-(23*time.Hour + 59*time.Minute + 29*time.Second))) })
 
 						it("keeps about", func() {
-							expect(subject(), t).To(Equal("about 24 hours ago"))
+							expect(result, t).To(Equal("about 24 hours ago"))
 						})
 					})
 
@@ -325,7 +326,7 @@ func TestTime(t *testing.T) {
 						it.BeforeEach(func() { at = ptr(base.Add(-(23*time.Hour + 59*time.Minute + 30*time.Second))) })
 
 						it("drops about, entering the day bucket", func() {
-							expect(subject(), t).To(Equal("1 day ago"))
+							expect(result, t).To(Equal("1 day ago"))
 						})
 					})
 				})
@@ -337,13 +338,14 @@ func TestTime(t *testing.T) {
 		// wording/bucket coverage this doesn't need to repeat.
 		describe("TimeAgo", func() {
 			var when time.Time
-			subject := func() string { return humane.TimeAgo(when) }
+			var result string
+			it.JustBeforeEach(func() { result = humane.TimeAgo(when) })
 
 			context("just now", func() {
 				it.BeforeEach(func() { when = time.Now() })
 
 				it("displays less than a minute ago", func() {
-					expect(subject(), t).To(Equal("less than a minute ago"))
+					expect(result, t).To(Equal("less than a minute ago"))
 				})
 			})
 
@@ -351,7 +353,7 @@ func TestTime(t *testing.T) {
 				it.BeforeEach(func() { when = time.Now().Add(-3 * time.Minute) })
 
 				it("forwards to DistanceInTime with time.Now() as relativeTo", func() {
-					expect(subject(), t).To(Equal("3 minutes ago"))
+					expect(result, t).To(Equal("3 minutes ago"))
 				})
 			})
 		})
