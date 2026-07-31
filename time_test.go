@@ -335,7 +335,9 @@ func TestTime(t *testing.T) {
 
 		// TimeAgo is a thin one-argument convenience over DistanceInTime, supplying
 		// time.Now() as relativeTo -- see DistanceInTime above for the exhaustive
-		// wording/bucket coverage this doesn't need to repeat.
+		// wording/bucket coverage this doesn't need to repeat. at is a plain
+		// time.Time (not *time.Time), so there's no nil-handling case here,
+		// unlike humane-ruby/humane-swift's time_ago/timeAgo.
 		describe("TimeAgo", func() {
 			var when time.Time
 			var result string
