@@ -428,3 +428,13 @@ demonstrating the convention, not executed as part of the suite.
 No behavior change to `HumanSize`/`TimeAgo`/`DistanceInTime` -- test-suite
 and tooling only, so no new `humane` version tag for this, matching the
 same call made for `gorderly`'s and `lambada`'s equivalent reversal.
+
+## Bumped to `expect` v0.3.0 (`ContainSubstring`/`HaveLen`/`BeEmpty`)
+
+`go.mod`'s `github.com/woodie/expect` pin bumped `v0.2.0` -> `v0.3.0`; no
+behavior change here, no new `humane` version needed. Hit the
+`go.sum`-not-committed gotcha rolling this out across `expect`'s three
+consumers in one session -- see `~/workspace/woodie/docs/COWORK.md`'s
+"Shared libraries across sibling repos" for the general lesson. Fixed here
+with a follow-up commit adding just the regenerated `go.sum`; `make check`
+clean after.
