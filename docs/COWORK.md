@@ -16,17 +16,16 @@ versioning don't share a tag namespace cleanly.
 
 ## Writing tests here
 
-Tests use plain [`sclevine/spec`](https://github.com/sclevine/spec) (real
-upstream, no fork, no `replace` directive -- see "Reversal: moved off the
-`woodie/spec` fork" below) for structure and
+Tests use [`sclevine/spec`](https://github.com/sclevine/spec) via the
+[`woodie/spec`](https://github.com/woodie/spec) fork (picked up through a
+`go.mod` `replace` directive, module path unchanged from upstream -- see
+"Second reversal" below) for structure and
 [`github.com/woodie/expect`](https://github.com/woodie/expect) for
 assertions -- the same pairing `lambada`/`gorderly` use. Shape:
 
 ```go
 func TestHumanSize(t *testing.T) {
-	spec.Run(t, "HumanSize", func(t *testing.T, describe spec.G, it spec.S) {
-		context, before := describe, it.Before
-
+	spec.Run(t, "HumanSize", func(t *testing.T, context spec.G, it spec.S) {
 		context("with 0 bytes", func() {
 			it("formats as Zero KB", func() {
 				expect(humane.HumanSize(0), t).To(Equal("Zero KB"))
@@ -36,10 +35,12 @@ func TestHumanSize(t *testing.T) {
 }
 ```
 
-`describe`/`context`/`it` nest like RSpec; `context`/`before`/`after` are
-`describe`/`it.Before`/`it.After` under friendlier names, assigned once as
-the first line inside the closure (only name the ones a given suite
-actually uses, drop the rest) -- no fork, nothing generated. Each `Test*`
+`context`/`it` nest like RSpec (the group parameter is named `context`
+since most suites only ever describe conditions; `describe := context`
+only gets added in a file that genuinely calls `describe(...)` somewhere
+-- `time_test.go` does, `size_test.go` doesn't). `it`'s hook methods
+(`it.BeforeEach`/`it.AfterEach`/`it.JustBeforeEach`) are called qualified,
+not aliased -- no fork-specific magic, nothing generated. Each `Test*`
 function passes its suite straight to `spec.Run` as an inline closure, not
 a separate named `*Suite` function -- see `gorderly`'s/`lambada`'s own
 `docs/COWORK.md` for why. `expect` is dot-imported, and every call site
@@ -438,3 +439,31 @@ consumers in one session -- see `~/workspace/woodie/docs/COWORK.md`'s
 "Shared libraries across sibling repos" for the general lesson. Fixed here
 with a follow-up commit adding just the regenerated `go.sum`; `make check`
 clean after.
+
+## Second reversal: back on `woodie/spec`, this time for BeforeEach/AfterEach/JustBeforeEach
+
+Different shape from the reversal above -- no `RunAliased`, no six-
+parameter signature, no named suite functions. `go.mod` picks up
+`woodie/spec` v0.2.0 via a plain `replace` directive (`replace
+github.com/sclevine/spec => github.com/woodie/spec v0.2.0`), since the
+fork keeps upstream's module path unchanged. The fork adds `BeforeEach`/
+`AfterEach`/`JustBeforeEach` (`Before`/`After` still work, deprecated via
+`staticcheck`'s `SA1019`, not removed) -- see `woodie/spec`'s own
+`docs/COWORK.md` for the full history.
+
+`time_test.go`/`size_test.go`: every `before(...)` call (via the
+`it.Before` method value) became `it.BeforeEach(...)`, called qualified.
+Separately: flipped which word is the raw `spec.Run` group parameter.
+`time_test.go` genuinely calls `describe(...)` (`DistanceInTime`,
+`TimeAgo`) and `context(...)` for conditions inside each, so its
+parameter is now named `context` with `describe := context` declared
+right below it -- same names, same behavior, just the base/alias
+direction flipped. `size_test.go` only ever calls `context(...)`, so it
+dropped the `describe`/alias line entirely rather than declare an alias
+that's never called (which wouldn't compile -- Go rejects unused
+locals). Same account-wide rule recorded in `gorderly`'s own
+`docs/COWORK.md`.
+
+Not yet verified against a real Go toolchain -- no Go in this sandbox.
+`go mod tidy && make check` on the user's own Mac is the next step,
+remembering to commit `go.sum` alongside `go.mod` before pushing.
