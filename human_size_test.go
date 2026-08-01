@@ -10,7 +10,7 @@ import (
 )
 
 func TestHumanSize(t *testing.T) {
-	spec.Run(t, "HumanSize", func(t *testing.T, context spec.G, it spec.S) {
+	spec.Run(t, "humane.HumanSize", func(t *testing.T, context spec.G, it spec.S) {
 		// JustBeforeEach runs the action under test (HumanSize) once, after
 		// every BeforeEach at every nesting level has set bytes -- the direct
 		// replacement for a subject closure invoked explicitly in each it,
@@ -22,7 +22,7 @@ func TestHumanSize(t *testing.T) {
 		context("with 0 bytes", func() {
 			it.BeforeEach(func() { bytes = 0 })
 
-			it("formats as Zero KB, matching ByteCountFormatter's own wording", func() {
+			it("formats as Zero KB", func() {
 				expect(result, t).To(Equal("Zero KB"))
 			})
 		})
@@ -38,7 +38,7 @@ func TestHumanSize(t *testing.T) {
 		context("with a small byte count", func() {
 			it.BeforeEach(func() { bytes = 7 })
 
-			it("spells out bytes rather than using a B label", func() {
+			it("spells out bytes", func() {
 				expect(result, t).To(Equal("7 bytes"))
 			})
 		})
@@ -46,12 +46,12 @@ func TestHumanSize(t *testing.T) {
 		context("with 999 bytes", func() {
 			it.BeforeEach(func() { bytes = 999 })
 
-			it("stays in bytes, just under the 1 KB threshold", func() {
+			it("stays in bytes", func() {
 				expect(result, t).To(Equal("999 bytes"))
 			})
 		})
 
-		context("with the shared 79992-byte fixture used by lambada scandalous", func() {
+		context("with 79992 bytes", func() {
 			it.BeforeEach(func() { bytes = 79992 })
 
 			it("formats as 80 KB", func() {
@@ -62,15 +62,15 @@ func TestHumanSize(t *testing.T) {
 		context("with a real file's byte count", func() {
 			it.BeforeEach(func() { bytes = 225935 })
 
-			it("matches Finder's reported size", func() {
+			it("formats as 226 KB", func() {
 				expect(result, t).To(Equal("226 KB"))
 			})
 		})
 
-		context("with zouk's ByteCountFormatter(.file) fixture", func() {
+		context("with 500000 bytes", func() {
 			it.BeforeEach(func() { bytes = 500000 })
 
-			it("matches its output", func() {
+			it("formats as 500 KB", func() {
 				expect(result, t).To(Equal("500 KB"))
 			})
 		})

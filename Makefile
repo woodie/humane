@@ -10,7 +10,7 @@ lint:
 # Verbose on purpose -- gorderly's documentation-style output, the Go
 # equivalent of Ruby's `rspec -fd` / Swift's `swift test | xctidy`.
 test:
-	go test -v ./... | gorderly -fd
+	go test -v ./... | gorderly -fs
 
 # Terser than `test` on purpose: plain `go test` has no per-test dot mode
 # of its own -- this just suppresses output on success and dumps the full
