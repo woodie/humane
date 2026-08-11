@@ -3,7 +3,7 @@ package humane_test
 import (
 	"testing"
 
-	"github.com/sclevine/spec"
+	"github.com/woodie/spec"
 	. "github.com/woodie/expect"
 
 	"github.com/woodie/humane"
