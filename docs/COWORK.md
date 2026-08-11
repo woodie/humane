@@ -28,17 +28,16 @@ algorithm, same wording, each in its own repo/registry.
 - **Defaults match Foundation exactly**; ActionView's `Approximate`/`IncludeSeconds`
   vocabulary is opt-in, layered on top, never a silent behavior change to the
   baseline.
-- **No `replace` directive needed for `woodie/spec`** the way `gorderly` avoids one
-  -- `humane` is a library, nothing ever runs `go install` against it, so the
-  `go install`-rejects-`replace` problem that forced `gorderly` off the fork doesn't
-  apply here. `go.mod` currently pins `woodie/spec v0.2.0` via `replace` for
+- **`woodie/spec` is a plain `require`, no `replace` directive.** `woodie/spec`
+  v0.3.0 renamed its module declaration to its own path (`woodie/spec#3`), so
+  `go.mod` pins `github.com/woodie/spec v0.3.0` directly for
   `BeforeEach`/`AfterEach`/`JustBeforeEach`.
 
 ## Testing
 
-`sclevine/spec` (via the `woodie/spec` fork) + `github.com/woodie/expect`, default
-output format `-fs` (matching the rest of the family's wording/spec structure).
-`go test -v ./... | gorderly -fd`, or `make test`/`make check`.
+`woodie/spec` + `github.com/woodie/expect`, default output format `-fs`
+(matching the rest of the family's wording/spec structure). `go test -v
+./... | gorderly -fd`, or `make test`/`make check`.
 
 ## Sandbox limitation
 
