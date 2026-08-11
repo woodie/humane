@@ -21,10 +21,19 @@ algorithm, same wording, each in its own repo/registry.
   explicit field -- the same zero-value gotcha `IncludeSeconds` used to have under
   its old name (`CollapseMinute`). `*bool` lets `TimeOptions{}`'s zero value still
   mean "use the default (`true`)".
-- **`WhenNil` collapses a guard-then-fallback into one call** -- `TimeAgo`/
-  `DistanceInTime` take `at *time.Time` directly rather than requiring the caller to
-  nil-check first, motivated by `zouk`'s Swift `ScanEntry.timeAgo` doing exactly that
-  guard by hand before this existed.
+- **`WhenNil` collapses a guard-then-fallback into one call** -- `DistanceInTime`
+  takes `at *time.Time` directly rather than requiring the caller to nil-check
+  first, motivated by `zouk`'s Swift `ScanEntry.timeAgo` doing exactly that
+  guard by hand before this existed. `TimeAgo` itself takes `at time.Time` by
+  value as of `v0.9.4` (see `docs/releases/v0.9.4.md`) -- every real caller has
+  a concrete timestamp, so the pointer/nil-handling lives in `DistanceInTime`'s
+  explicit core, not the convenience wrapper; `humane-kotlin`'s `timeAgo`
+  matches this shape, `humane-ruby`/`humane-swift`'s stay nullable. Deliberate,
+  not something to bring into parity -- see `humane-ruby`'s own `docs/COWORK.md`
+  ("Brought `when_nil` to parity") for the one piece of this that *did* need
+  fixing: the actual returned value on a nil `at` with no fallback set is `""`
+  in all four languages now, `WhenNil`'s zero value here having been the
+  correct one all along.
 - **Defaults match Foundation exactly**; ActionView's `Approximate`/`IncludeSeconds`
   vocabulary is opt-in, layered on top, never a silent behavior change to the
   baseline.
