@@ -39,6 +39,22 @@ algorithm, same wording, each in its own repo/registry.
 (matching the rest of the family's wording/spec structure). `go test -v
 ./... | gorderly -fd`, or `make test`/`make check`.
 
+**Deliberate exception: hook methods are aliased here, not called
+qualified.** Every other Go repo in this account (`gorderly`, `lambada`,
+`expect` itself) calls `it.BeforeEach`/`it.JustBeforeEach` qualified --
+`spec`'s own `docs/COWORK.md` explains why the fuller destructuring
+alias (`context, before, after := describe, it.Before, it.After`) got
+reversed once three hook names made that line cluttered. `humane`
+intentionally goes back to that fuller style, as a real worked example
+of it: `describe, beforeEach, justBeforeEach := context, it.BeforeEach,
+it.JustBeforeEach` (or just `beforeEach, justBeforeEach := ...` in files
+that don't call `describe`). Works cleanly here specifically because
+this suite never uses `AfterEach` -- two aliased hook names, not three,
+stays readable where the account-wide reversal was reacting to three.
+See `config_test.go`'s comment for the same note at the point of use.
+Not a mistake to "fix" into qualified calls to match sibling repos --
+this repo is deliberately the exception, on purpose, for comparison.
+
 ## Sandbox limitation
 
 No Go toolchain here -- changes are written by inspection, verified via `go mod
