@@ -17,12 +17,14 @@ import (
 // unlike humane-ruby/humane-swift's time_ago/timeAgo.
 func TestTimeAgo(t *testing.T) {
 	spec.Run(t, "humane.TimeAgo", func(t *testing.T, context spec.G, it spec.S) {
+		beforeEach, justBeforeEach := it.BeforeEach, it.JustBeforeEach
+
 		var when time.Time
 		var result string
-		it.JustBeforeEach(func() { result = humane.TimeAgo(when) })
+		justBeforeEach(func() { result = humane.TimeAgo(when) })
 
 		context("just now", func() {
-			it.BeforeEach(func() { when = time.Now() })
+			beforeEach(func() { when = time.Now() })
 
 			it("displays less than a minute ago", func() {
 				expect(result, t).To(Equal("less than a minute ago"))
@@ -30,7 +32,7 @@ func TestTimeAgo(t *testing.T) {
 		})
 
 		context("3 minutes ago", func() {
-			it.BeforeEach(func() { when = time.Now().Add(-3 * time.Minute) })
+			beforeEach(func() { when = time.Now().Add(-3 * time.Minute) })
 
 			it("forwards to DistanceInTime with time.Now() as relativeTo", func() {
 				expect(result, t).To(Equal("3 minutes ago"))
