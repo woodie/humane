@@ -81,6 +81,13 @@ tidy`/`go test ./...`/`make check` on the user's own Mac.
 (KB 0, MB 1, GB+ 2) plus round-up into the next unit, confirmed against real
 Finder output and shipped in all four libraries (`v0.9.6` here).
 
+**Consumers deliberately not bumped for #3.** `lambada` (Go, still `v0.9.4`),
+`scandalous` (Ruby, `0.9.3` in `Gemfile.lock`) and `huck` (`humane-kotlin`
+`0.1.1`) stay on their current pins: their scans are typically 100-999 KB, where
+the old and new rounding rules produce identical output. Bump them alongside the
+next real feature work in each. `zouk` needs nothing (`humane-swift` `v0.9.4`
+was tests only).
+
 `humane-ruby` issue #1 (ActionView's full bucket table past the "1 day" row) is a
 deliberate scope boundary, not a gap -- see that repo's issue tracker, not a TODO
 here.
