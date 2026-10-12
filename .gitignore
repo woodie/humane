@@ -32,3 +32,6 @@ go.work.sum
 # .vscode/
 *.swp
 .*.swp
+
+# macOS Finder metadata
+.DS_Store
