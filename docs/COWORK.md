@@ -71,16 +71,15 @@ tidy`/`go test ./...`/`make check` on the user's own Mac.
 
 ## Current status
 
-`v0.9.5`. Fully migrated off Ginkgo/Gomega onto `spec`+`expect` (matches `gorderly`/
+`v0.9.6`. Fully migrated off Ginkgo/Gomega onto `spec`+`expect` (matches `gorderly`/
 `lambada`). Adopted by `lambada`, `scandalous` (via `humane-ruby`), and `zouk` (via
 `humane-swift`).
 
 ## Open items
 
-**`HumanSize` rounding** (#3): Finder's per-unit decimal places (KB 0, MB 1,
-GB+ 2) plus round-up into the next unit, confirmed against real Finder
-output. Go fixed first; `humane-ruby`/`humane-kotlin` still carry the old
-3-significant-figure rule and need the same port.
+**`HumanSize` rounding** (#3) is settled: Finder's per-unit decimal places
+(KB 0, MB 1, GB+ 2) plus round-up into the next unit, confirmed against real
+Finder output and shipped in all four libraries (`v0.9.6` here).
 
 `humane-ruby` issue #1 (ActionView's full bucket table past the "1 day" row) is a
 deliberate scope boundary, not a gap -- see that repo's issue tracker, not a TODO
