@@ -149,6 +149,14 @@ func TestHumanSize(t *testing.T) {
 			})
 		})
 
+		context("with a terabyte value", func() {
+			beforeEach(func() { bytes = 1234567890123 })
+
+			it("shows two decimal places", func() {
+				expect(result, t).To(Equal("1.23 TB"))
+			})
+		})
+
 		context("when rounding reaches 1000 of a unit", func() {
 			context("just below the kilobyte limit", func() {
 				beforeEach(func() { bytes = 999499 })
@@ -179,6 +187,14 @@ func TestHumanSize(t *testing.T) {
 
 				it("moves up to GB", func() {
 					expect(result, t).To(Equal("1 GB"))
+				})
+			})
+
+			context("with 999995000000 bytes", func() {
+				beforeEach(func() { bytes = 999995000000 })
+
+				it("moves up to TB", func() {
+					expect(result, t).To(Equal("1 TB"))
 				})
 			})
 		})
