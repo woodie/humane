@@ -30,49 +30,50 @@ ships this exact combination; see the README for why. Starts at `KB`
 (index 0) -- byte-scale values are spelled out (`"7 bytes"`) rather than
 using a unit label at all, so `sizeUnits` never needs a `"B"` entry.
 
+### `decimalPlaces`
+Finder's fixed decimal places per unit, index-aligned with `sizeUnits`:
+`KB` 0, `MB` 1, `GB` and above 2. This is `ByteCountFormatter`'s default
+("adaptive") behavior, confirmed against real Finder output in issue #3.
+
 ### `HumanSize`
-Formats bytes the way Finder does. Bakes in three corrections found by
-comparing this package's original 2-significant-figure port against real
-`ByteCountFormatter` output (via `humane-swift`'s real-hardware testing --
-see that repo's `docs/COWORK.md`, "Current state"):
+Formats bytes the way Finder does:
 
 - `0` reads `"Zero KB"`, not `"0 B"` -- a hardcoded special case;
   `ByteCountFormatter` doesn't run its usual rounding logic for zero.
 - Values under 1000 spell out `"byte"`/`"bytes"` (`"1 byte"`, `"7 bytes"`)
   rather than using a `"B"` label.
-- Everything else is rounded to 3 significant figures (not 2) via
-  `formatSignificant`, then unit-labeled. The old 2-significant-figure rule
-  (1 decimal below 10, none at or above) undercounted precision for
-  values under 10: `5,240,000,000` bytes is `"5.24 GB"` on real hardware,
-  not `"5.2 GB"`.
+- Everything else is scaled to its unit, rounded half up to that unit's
+  `decimalPlaces`, then has trailing fractional zeros trimmed (`"2 MB"`,
+  not `"2.0 MB"`).
+- If rounding reaches 1000 of a unit, the value moves up to the next unit
+  and is re-rounded there: `999_999` is `"1 MB"`, not `"1000 KB"`, and
+  `999_960_000` is `"1 GB"`, not `"1000 MB"`.
 
-The 3-significant-figure rule was chosen over a narrower "just fix the
-GB case" patch because it's the only single rule found that reproduces
-every known fixture at once -- including the two cross-checked against
-real hardware before this change (`225_935` -> `"226 KB"`, `500_000` ->
-`"500 KB"`) and the existing `1,500,000` -> `"1.5 MB"` fixture, alongside
-the new GB finding. That said, it's still an inference from a small
-fixture set, not something confirmed across every magnitude -- see
-`docs/COWORK.md`'s `v0.9.0` entry for what still needs a real
-`ByteCountFormatter` comparison.
+Earlier versions rounded everything to 3 significant figures instead. That
+rule happened to match every fixture the suite had at the time, but real
+Finder output showed it was wrong for most sizes under 10 MB (`4,132,383`
+bytes is `"4.1 MB"`, not `"4.13 MB"`) and above 100 MB (`123,456,789` is
+`"123.5 MB"`, not `"123 MB"`). See issue #3 for the full Finder comparison.
 
-    HumanSize(0)          == "Zero KB"
-    HumanSize(1)          == "1 byte"
-    HumanSize(79992)      == "80 KB"
-    HumanSize(225935)     == "226 KB"
-    HumanSize(1500000)    == "1.5 MB"
-    HumanSize(5240000000) == "5.24 GB"
+    HumanSize(0)           == "Zero KB"
+    HumanSize(1)           == "1 byte"
+    HumanSize(2579)        == "3 KB"
+    HumanSize(225935)      == "226 KB"
+    HumanSize(999999)      == "1 MB"
+    HumanSize(4132383)     == "4.1 MB"
+    HumanSize(123456789)   == "123.5 MB"
+    HumanSize(5240000000)  == "5.24 GB"
+    HumanSize(12345678901) == "12.35 GB"
 
-### `formatSignificant`
-Rounds `value` to `sigFigs` significant figures, then trims trailing
-fractional zeros (and the decimal point itself, if nothing remains after
-it) -- this trimming is what keeps `"1.5 MB"` from becoming `"1.50 MB"`
-while still letting `"5.24 GB"` keep both of its non-zero decimal digits.
-`magnitude` (digits before the decimal point) uses `floor(log10(value)) +
-1` rather than `ceil(log10(value))` specifically to avoid a boundary bug
-at exact powers of 10 (`ceil(log10(10))` and `ceil(log10(10.0))` can both
-round to `1` instead of the correct `2`-digit magnitude, depending on
-floating-point rounding of the logarithm itself).
+### `roundForUnit`
+Uses `math.Round` (half away from zero) on the scaled value rather than
+letting `strconv.FormatFloat` do the rounding, since `FormatFloat` rounds
+exact ties to even. `1500` bytes is `"2 KB"` in Finder.
+
+### `trimZeros`
+Formats an already-rounded value to its unit's decimal places, then trims
+trailing fractional zeros (and the decimal point itself, if nothing remains
+after it).
 
 ## time.go
 

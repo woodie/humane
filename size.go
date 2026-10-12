@@ -11,10 +11,10 @@ import (
 // sizeUnits are Finder's capitalized, 1000-based unit labels above byte scale.
 var sizeUnits = []string{"KB", "MB", "GB", "TB", "PB", "EB"}
 
-// HumanSize formats a byte count the way Finder does. See docs/COMMENTS.md
-// for the 3-significant-figure rounding rule and the corrections (zero
-// bytes, byte-scale wording) this bakes in from real ByteCountFormatter
-// output.
+// decimalPlaces lines up with sizeUnits: KB 0, MB 1, GB and above 2.
+var decimalPlaces = []int{0, 1, 2, 2, 2, 2}
+
+// HumanSize formats a byte count the way Finder does -- see docs/COMMENTS.md.
 func HumanSize(bytes int64) string {
 	if bytes == 0 {
 		return "Zero KB"
@@ -30,21 +30,21 @@ func HumanSize(bytes int64) string {
 	if exp > len(sizeUnits) {
 		exp = len(sizeUnits)
 	}
-	value := float64(bytes) / math.Pow(1000, float64(exp))
-
-	return fmt.Sprintf("%s %s", formatSignificant(value, 3), sizeUnits[exp-1])
-}
-
-// formatSignificant rounds value to sigFigs significant figures and trims
-// any trailing fractional zeros (and the decimal point itself, if nothing
-// remains after it) -- see docs/COMMENTS.md.
-func formatSignificant(value float64, sigFigs int) string {
-	magnitude := int(math.Floor(math.Log10(value))) + 1
-	decimals := sigFigs - magnitude
-	if decimals < 0 {
-		decimals = 0
+	value := roundForUnit(bytes, exp)
+	if value >= 1000 && exp < len(sizeUnits) {
+		exp++
+		value = roundForUnit(bytes, exp)
 	}
 
+	return fmt.Sprintf("%s %s", trimZeros(value, decimalPlaces[exp-1]), sizeUnits[exp-1])
+}
+
+func roundForUnit(bytes int64, exp int) float64 {
+	scale := math.Pow(10, float64(decimalPlaces[exp-1]))
+	return math.Round(float64(bytes)/math.Pow(1000, float64(exp))*scale) / scale
+}
+
+func trimZeros(value float64, decimals int) string {
 	s := strconv.FormatFloat(value, 'f', decimals, 64)
 	if strings.Contains(s, ".") {
 		s = strings.TrimRight(s, "0")

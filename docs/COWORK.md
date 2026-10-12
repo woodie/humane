@@ -77,8 +77,11 @@ tidy`/`go test ./...`/`make check` on the user's own Mac.
 
 ## Open items
 
-**`HumanSize` rounding verification** is tracked on `humane-swift` (the real-hardware
-reference implementation), not here -- see that repo's own `docs/COWORK.md`.
+**`HumanSize` rounding** (#3): Finder's per-unit decimal places (KB 0, MB 1,
+GB+ 2) plus round-up into the next unit, confirmed against real Finder
+output. Go fixed first; `humane-ruby`/`humane-kotlin` still carry the old
+3-significant-figure rule and need the same port.
+
 `humane-ruby` issue #1 (ActionView's full bucket table past the "1 day" row) is a
 deliberate scope boundary, not a gap -- see that repo's issue tracker, not a TODO
 here.
