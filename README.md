@@ -5,12 +5,10 @@
 [![Release](https://img.shields.io/github/v/release/woodie/humane.svg)](https://github.com/woodie/humane/releases/latest)
 [![License](https://img.shields.io/github/license/woodie/humane.svg)](LICENSE)
 
-Human-readable file sizes (1000-based math, capitalized labels, the way Mac
-Finder displays them) and relative times (`"3 minutes ago"`, `"in 3 hours"`)
-for Go and Ruby HTML templates -- as simple to drop in as ActionView's own
-helpers, with output that's consistent with
-[`humane-ruby`](https://github.com/woodie/humane-ruby) and
-[`humane-swift`](https://github.com/woodie/humane-swift).
+File sizes that read exactly the way macOS Finder shows them (`"4.1 MB"`,
+`"226 KB"`), and relative dates in Rails ActionView's wording (`"about 3 hours
+ago"`, `"in 3 minutes"`), for Go -- as simple to drop into an HTML template as
+ActionView's own helpers.
 
 ```go
 import "github.com/woodie/humane"
@@ -30,6 +28,26 @@ humane.DistanceInTime(&mtime, now) // "3 minutes ago" -- explicit relativeTo, fo
 go get github.com/woodie/humane
 ```
 
+## File sizes
+
+`HumanSize` matches Foundation's `ByteCountFormatter` (file style), which is what
+macOS Finder shows, and is checked against real Finder output:
+
+- 1000-based units with capitalized labels: `KB`, `MB`, `GB`, `TB`, and up.
+- A fixed number of decimal places per unit -- none for KB, one for MB, two
+  for GB and above -- with trailing zeros dropped (`"2 MB"`, not `"2.0 MB"`).
+- Rounds half up, and moves up a unit when rounding reaches 1000:
+  999,999 bytes is `"1 MB"`, not `"1000 KB"`.
+- Zero bytes is `"Zero KB"`, and anything under 1000 bytes is spelled out
+  (`"1 byte"`, `"7 bytes"`).
+
+```go
+humane.HumanSize(2579)       // "3 KB"
+humane.HumanSize(4132383)    // "4.1 MB"
+humane.HumanSize(999999)     // "1 MB"
+humane.HumanSize(5240000000) // "5.24 GB"
+```
+
 ## `DistanceInTime` and `TimeAgo`
 
 Two entry points, same naming split as ActionView's own
@@ -41,6 +59,10 @@ Two entry points, same naming split as ActionView's own
 - **`TimeAgo(at time.Time, ...)`** -- a one-argument convenience for the
   common "drop into a view" case, where a timestamp is always in hand.
   Supplies `time.Now()` as `relativeTo` internally.
+
+The wording follows ActionView's `distance_of_time_in_words`, with one
+difference: direction is picked for you. A past time reads `"3 minutes ago"`
+and a future one `"in 3 minutes"`, where ActionView leaves that to the caller.
 
 Both share the same options and recommended defaults, already matching
 ActionView's own `distance_of_time_in_words` defaults -- pass none at all and
